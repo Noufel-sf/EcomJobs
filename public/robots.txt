@@ -1,0 +1,25 @@
+User-agent: *
+Allow: /
+
+# Disallow admin and user-specific pages
+Disallow: /admin-seller/
+Disallow: /admincategories/
+Disallow: /adminjobs/
+Disallow: /adminusers/
+Disallow: /my-account/
+Disallow: /cart/
+Disallow: /completeorder/
+Disallow: /thankyou/
+Disallow: /login/
+Disallow: /register/
+
+# Allow everything else
+Allow: /
+Allow: /products/
+Allow: /productdetails/
+Allow: /about/
+Allow: /jobs/
+Allow: /help/
+
+# Sitemap location
+Sitemap: https://yoursite.com/sitemap.xml
