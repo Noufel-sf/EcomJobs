@@ -24,8 +24,8 @@ import axiosInstance from "@/lib/Api";
 import SingleProductSkeleton from "./SingleProductSkeleton";
 import toast from "react-hot-toast";
 import { ButtonLoading } from "./ui/ButtonLoading";
-import { useCart } from "@/context/CartContext";
-import { useAuth } from "@/context/AuthContext";
+import { useAddToCartMutation } from "@/Redux/Services/CartApi";
+import { useAppSelector } from "@/Redux/hooks";
 import { productThumbnails, shopOwnerInfo } from "@/data";
 import { Swiper, SwiperSlide } from "swiper/react";
 import { Navigation, Thumbs, Zoom } from "swiper/modules";
@@ -48,8 +48,8 @@ const SingleProduct = () => {
   const [comment, setComment] = useState("");
   const [selectedSize, setSelectedSize] = useState<string>("");
   const [thumbsSwiper, setThumbsSwiper] = useState<SwiperInstance>(null);
-  const { addToCart } = useCart();
-  const { user } = useAuth();
+  const [addToCart] = useAddToCartMutation();
+  const user = useAppSelector((state) => state.auth.user);
   let router = useRouter();
 
   const {
@@ -68,7 +68,14 @@ const SingleProduct = () => {
     //   router.push("/login");
     //   return;
     // }
-    addToCart(singleProduct?.id);
+    addToCart(singleProduct?.id)
+      .unwrap()
+      .then(() => {
+        toast.success("Added to cart");
+      })
+      .catch((error: any) => {
+        toast.error(error?.data?.message || "Failed to add to cart");
+      });
   }, [user, router, addToCart, singleProduct?.id]);
 
 

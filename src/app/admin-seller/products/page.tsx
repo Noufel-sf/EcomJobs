@@ -1,6 +1,6 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import {
   getCoreRowModel,
   getPaginationRowModel,
@@ -27,16 +27,35 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { ChevronDown } from "lucide-react";
 import AdminSidebarLayout from "@/components/AdminSidebarLayout";
-import Api from "@/lib/Api";
 import toast from "react-hot-toast";
 import AdminDataTableSkeleton from "@/components/AdminDataTableSkeleton";
 import { createProductColumns } from "@/components/ProductRow";
 import UpdateProductUi from "@/components/UpdateProductUi";
 import CreateProductUi from "@/components/CreateProductUi";
+import {
+  useGetAllProductsQuery,
+  useGetCategoriesQuery,
+  useCreateProductMutation,
+  useUpdateProductMutation,
+  useDeleteProductMutation,
+  useUpdateProductStatusMutation,
+} from "@/Redux/Services/ProductsApi";
 
 export default function AdminProducts() {
-  const [data, setData] = useState([]);
-  const [loading, setLoading] = useState(false);
+  // ✅ RTK Query Hooks
+  
+  
+  const { data: productsData, isLoading } = useGetAllProductsQuery(undefined);
+  const { data: categories = [] } = useGetCategoriesQuery(undefined);
+  const [createProduct, { isLoading: isCreating }] = useCreateProductMutation();
+  const [updateProduct, { isLoading: isUpdating }] = useUpdateProductMutation();
+  const [deleteProduct, { isLoading: isDeleting }] = useDeleteProductMutation();
+  const [updateProductStatus] = useUpdateProductStatusMutation();
+
+  const products = productsData?.products || [];
+  const loading = isLoading || isCreating || isUpdating || isDeleting;
+
+  // UI State
   const [editMode, setEditMode] = useState(false);
   const [editSheetOpen, setEditSheetOpen] = useState(false);
   const [name, setName] = useState("");
@@ -47,46 +66,26 @@ export default function AdminProducts() {
   const [categoryId, setCategoryId] = useState("");
   const [bestSelling, setBestSelling] = useState(false);
   const [sizes, setSizes] = useState([]);
-  const [categories, setCategories] = useState([]);
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [open, setOpen] = useState(false);
 
+  
+  
+  
   const handleStatusChange = async (productId: string, newStatus: string) => {
     try {
-      await Api.patch(`/product/${productId}`, {
+      await updateProductStatus({
+        id: productId,
         active: newStatus === "active",
-      });
+      }).unwrap();
       toast.success("Status updated successfully");
-      await fetchProducts();
     } catch (error: any) {
-      toast.error(error.response?.data?.message || "Failed to update status");
-    }
-  };
-
-  const fetchProducts = async () => {
-    setLoading(true);
-    try {
-      const { data } = await Api.get("/product");
-      setData(data?.products);
-    } catch (error) {
-      console.log(error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const fetchCategories = async () => {
-    try {
-      const res = await Api.get("/category");
-      setCategories(res.data.categories);
-    } catch {
-      toast.error("Failed to fetch categories");
+      toast.error(error?.data?.message || "Failed to update status");
     }
   };
 
   const handleCreateProduct = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
     try {
       const formData = new FormData();
       formData.append("name", name);
@@ -95,23 +94,25 @@ export default function AdminProducts() {
       formData.append("categoryId", categoryId);
       formData.append("bestSelling", bestSelling ? "true" : "false");
       formData.append("sizes", JSON.stringify(sizes));
-      
-      // Append all images
+
       images.forEach((image, index) => {
         if (image) {
           formData.append(`image${index + 1}`, image);
         }
       });
 
-      let res;
       if (editMode && selectedProduct) {
-        res = await Api.patch(`/product/${(selectedProduct as any).id}`, formData);
+        await updateProduct({
+          id: (selectedProduct as any).id,
+          formData,
+        }).unwrap();
+        toast.success("Product updated successfully");
       } else {
-        res = await Api.post("/product", formData);
+        await createProduct(formData).unwrap();
+        toast.success("Product created successfully");
       }
 
-      toast.success(res.data.message);
-      await fetchProducts();
+      // Reset form
       setOpen(false);
       setEditMode(false);
       setEditSheetOpen(false);
@@ -125,29 +126,18 @@ export default function AdminProducts() {
       setBestSelling(false);
       setSizes([]);
     } catch (error: any) {
-      toast.error(error.response?.data?.message || "Something went wrong");
-    } finally {
-      setLoading(false);
+      toast.error(error?.data?.message || "Something went wrong");
     }
   };
 
   const handleDelete = async (productId: string) => {
-    setLoading(true);
     try {
-      const res = await Api.delete(`/product/${productId}`);
-      toast.success(res.data.message);
-      await fetchProducts();
+      await deleteProduct(productId).unwrap();
+      toast.success("Product deleted successfully");
     } catch (error: any) {
-      toast.error(error.response?.data?.message);
-    } finally {
-      setLoading(false);
+      toast.error(error?.data?.message || "Failed to delete product");
     }
   };
-
-  useEffect(() => {
-    fetchProducts();
-    fetchCategories();
-  }, []);
 
   const [sorting, setSorting] = useState<any[]>([]);
   const [columnFilters, setColumnFilters] = useState<any[]>([]);
@@ -171,7 +161,7 @@ export default function AdminProducts() {
   });
 
   const table = useReactTable({
-    data,
+    data: products,
     columns,
     getCoreRowModel: getCoreRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
@@ -232,7 +222,11 @@ export default function AdminProducts() {
 
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="sm" className="ml-auto cursor-pointer">
+              <Button
+                variant="outline"
+                size="sm"
+                className="ml-auto cursor-pointer"
+              >
                 Columns <ChevronDown className="ml-2 h-4 w-4" />
               </Button>
             </DropdownMenuTrigger>
@@ -299,7 +293,7 @@ export default function AdminProducts() {
               ))}
             </TableHeader>
             <TableBody className="">
-              {loading ? (
+              {isLoading ? (
                 <AdminDataTableSkeleton />
               ) : table.getRowModel().rows?.length ? (
                 table.getRowModel().rows.map((row) => (

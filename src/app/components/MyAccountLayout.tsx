@@ -24,12 +24,12 @@ import {
   DropdownMenuItem,
 } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
-import { useAuth } from '@/context/AuthContext';
+import { useAppSelector } from '@/Redux/hooks';
 import Link from 'next/link';
 
 export default function Layout({ children }) {
   const { setTheme } = useTheme();
-  const { user } = useAuth();
+  const user = useAppSelector((state) => state.auth.user);
 
   return (
     <SidebarProvider>

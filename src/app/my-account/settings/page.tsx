@@ -3,7 +3,8 @@
 
 import SidebarLayout from '@/components/SidebarLayout';
 import { Button } from '@/components/ui/button';
-import { useAuth } from '@/context/AuthContext';
+import { useAppSelector, useAppDispatch } from '@/Redux/hooks';
+import { updateUser, setLoading } from '@/Redux/Slices/AuthSlice';
 import { AppWindowIcon, CodeIcon } from 'lucide-react';
 import {
   Card,
@@ -24,7 +25,9 @@ import { ButtonLoading } from '@/components/ui/ButtonLoading';
 
 
  export default function AccountSettings() {
-  const { user, setLoading, loading, setUser } = useAuth();
+  const dispatch = useAppDispatch();
+  const user = useAppSelector((state) => state.auth.user);
+  const loading = useAppSelector((state) => state.auth.loading);
   const [name, setName] = useState(user?.name || '');
   const [email, setEmail] = useState(user?.email || '');
   const [currentPassword, setCurrentPassword] = useState('');
@@ -32,7 +35,7 @@ import { ButtonLoading } from '@/components/ui/ButtonLoading';
 
   const handleChangeInfo = async ( e : React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    setLoading(true);
+    dispatch(setLoading(true));
 
     try {
       const res = await axiosInstance.patch('/user/updateInfo', {
@@ -40,17 +43,17 @@ import { ButtonLoading } from '@/components/ui/ButtonLoading';
         email,
       });
       toast.success(res.data.message || 'Profile updated!');
-      setUser((prev) => ({ ...prev, name, email }));
+      dispatch(updateUser({ ...user!, name, email }));
     } catch (error: any) {
       toast.error(error.response?.data?.message || 'Failed to update profile.');
     } finally {
-      setLoading(false);
+      dispatch(setLoading(false));
     }
   };
 
   const handleChangePassword = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    setLoading(true);
+    dispatch(setLoading(true));
     try {
       const res = await axiosInstance.patch('/user/updatePassword', {
         currentPassword,
@@ -60,7 +63,7 @@ import { ButtonLoading } from '@/components/ui/ButtonLoading';
     } catch (error: any) {
       toast.error(error.response?.data?.message);
     } finally {
-      setLoading(false);
+      dispatch(setLoading(false));
     }
   };
 

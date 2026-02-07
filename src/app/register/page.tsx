@@ -14,10 +14,11 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '@/context/AuthContext';
-import axiosInstance from '@/lib/Api';
 import toast from 'react-hot-toast';
 import { ButtonLoading } from '@/components/ui/ButtonLoading';
+import { useRegisterMutation } from '@/Redux/Services/AuthApi';
+import { useAppDispatch } from '@/Redux/hooks';
+import { setCredentials } from '@/Redux/Slices/AuthSlice';
 import { Lock, Mail, Eye, EyeOff, ShieldCheck, UserPlus, User } from 'lucide-react';
 
 interface RegisterPageProps {
@@ -25,30 +26,23 @@ interface RegisterPageProps {
 }
 
 const RegisterPage: React.FC<RegisterPageProps> = ({ className, ...props }) => {
-  const { setUser, loading, setLoading } = useAuth();
+  const dispatch = useAppDispatch();
   const router = useRouter();
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [register, { isLoading }] = useRegisterMutation();
 
   const handleRegister = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    setLoading(true);
     try {
-      const res = await axiosInstance.post('/auth/register', {
-        name,
-        email,
-        password,
-      });
-      setUser(res.data.user);
+      const result = await register({ name, email, password }).unwrap();
+      dispatch(setCredentials({ user: result.user }));
       toast.success('Registration Successful 🎉');
       router.push('/');
-    } catch (error) {
-      const err = error as { response?: { data?: { message?: string } } };
-      toast.error(err?.response?.data?.message || 'Registration failed. Please try again.');
-    } finally {
-      setLoading(false);
+    } catch (error: any) {
+      toast.error(error?.data?.message || 'Registration failed. Please try again.');
     }
   };
 
@@ -109,7 +103,7 @@ const RegisterPage: React.FC<RegisterPageProps> = ({ className, ...props }) => {
                         autoComplete="name"
                         aria-required="true"
                         aria-label="Full name"
-                        disabled={loading}
+                        disabled={isLoading}
                       />
                     </div>
 
@@ -131,7 +125,7 @@ const RegisterPage: React.FC<RegisterPageProps> = ({ className, ...props }) => {
                         autoComplete="email"
                         aria-required="true"
                         aria-label="Email address"
-                        disabled={loading}
+                        disabled={isLoading}
                       />
                     </div>
 
@@ -154,7 +148,7 @@ const RegisterPage: React.FC<RegisterPageProps> = ({ className, ...props }) => {
                           autoComplete="new-password"
                           aria-required="true"
                           aria-label="Password"
-                          disabled={loading}
+                          disabled={isLoading}
                           minLength={6}
                         />
                         <button
@@ -178,7 +172,7 @@ const RegisterPage: React.FC<RegisterPageProps> = ({ className, ...props }) => {
 
                     {/* Submit Button */}
                     <div className="flex flex-col gap-3 pt-2">
-                      {loading ? (
+                      {isLoading ? (
                         <ButtonLoading />
                       ) : (
                         <Button 

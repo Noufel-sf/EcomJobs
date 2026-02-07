@@ -23,7 +23,7 @@ import {
   DropdownMenuItem,
 } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
-import { useAuth } from '@/context/AuthContext';
+import { useAppSelector } from '@/Redux/hooks';
 import { AdminAppSidebar } from './admin-app-sidebar';
 import Link from 'next/link';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -31,7 +31,7 @@ import { ChartAreaInteractive } from '../admin-seller/chart-area-interactive';
 
 export default function AdminLayout({ children }) {
   const { setTheme } = useTheme();
-  const { user } = useAuth();
+  const user = useAppSelector((state) => state.auth.user);
 
   // Stats data
   const stats = [

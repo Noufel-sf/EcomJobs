@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useMemo, memo, useCallback } from "react";
+import { useState, useMemo, memo,  useEffect, useCallback } from "react";
 import { Swiper, SwiperSlide } from "swiper/react";
 import "swiper/css";
 import "swiper/css/navigation";
@@ -9,7 +9,6 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 import Image from "next/image";
 import { Filter, X, SlidersHorizontal } from "lucide-react";
 import { ProductCard } from "@/components/ProductCard";
-import Api from "@/lib/Api";
 import ProductCardSkeleton from "@/components/ProductCardSkeleton";
 import { Pagination } from "@/components/Pagination";
 import { Button } from "@/components/ui/button";
@@ -18,6 +17,9 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import type { Product } from "@/lib/Types";
+import { useAddToCartMutation } from "@/Redux/Services/CartApi";
+import { useGetAllProductsQuery, useGetCategoriesQuery } from "@/Redux/Services/ProductsApi";
+import toast from "react-hot-toast";
 
 
 import { Separator } from "@/components/ui/separator";
@@ -44,24 +46,9 @@ import hero2 from "@assets/hero2.png";
 import hero3 from "@assets/hero3.png";
 import hero4 from "@assets/hero4.png";
 
-// Mock categories data
-const mockCategories = [
-  { id: "1", title: "Electronics", count: 156 },
-  { id: "2", title: "Clothing", count: 243 },
-  { id: "3", title: "Home & Garden", count: 189 },
-  { id: "4", title: "Sports & Outdoors", count: 127 },
-  { id: "5", title: "Books", count: 98 },
-  { id: "6", title: "Toys & Games", count: 134 },
-  { id: "7", title: "Beauty & Health", count: 167 },
-  { id: "8", title: "Automotive", count: 78 },
-];
-
-
 const ITEMS_PER_PAGE = 8;
 
 function AllProductsPage() {
-  const [products, setProducts] = useState<Product[]>([]);
-  const [loading, setLoading] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [priceRange] = useState([0, 1000000]);
@@ -71,29 +58,26 @@ function AllProductsPage() {
 
   const heroImages = [hero1, hero2, hero3, hero4];
 
-  // Mock user and cart function
-  const user = null;
-  const addToCart = useCallback((id: string) => {
-    console.log("Add to cart:", id);
-  }, []);
-
-  const fetchProducts = useCallback(async () => {
-    setLoading(true);
-    try {
-      const { data } = await Api.get("/product");
-      setProducts(data.products);
-      console.log(data);
-      
-    } catch (error) {
-      console.log(error);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+  // RTK Query hooks
+  const { data: productsData, isLoading } = useGetAllProductsQuery(undefined);
+  const { data: categoriesData } = useGetCategoriesQuery(undefined);
+  console.log("categories" , categoriesData);
   
-  useEffect(() => {
-    fetchProducts();
-  }, [fetchProducts]);
+  const [addToCartMutation] = useAddToCartMutation();
+
+  const products = productsData?.products || [];
+  const categories = categoriesData || [];
+  
+  const addToCart = useCallback((id: string) => {
+    addToCartMutation(id)
+      .unwrap()
+      .then(() => {
+        toast.success("Added to cart");
+      })
+      .catch((error: any) => {
+        toast.error(error?.data?.message || "Failed to add to cart");
+      });
+  }, [addToCartMutation]);
 
 
 
@@ -200,7 +184,7 @@ function AllProductsPage() {
           )}
         </div>
         <div className="space-y-2">
-          {mockCategories.map((category) => (
+          {categories.map((category) => (
             <div key={category.id} className="flex items-center space-x-2">
               <Checkbox
                 id={`category-${category.id}`}
@@ -213,9 +197,6 @@ function AllProductsPage() {
                 className="text-sm flex-1 cursor-pointer flex items-center justify-between"
               >
                 <span>{category.title}</span>
-                <span className="text-xs text-muted-foreground" aria-label={`${category.count} items`}>
-                  ({category.count})
-                </span>
               </label>
             </div>
           ))}
@@ -435,7 +416,7 @@ function AllProductsPage() {
             )}
 
             {/* Products Grid */}
-            {loading ? (
+            {isLoading ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6" role="status" aria-label="Loading products">
                 {Array.from({ length: ITEMS_PER_PAGE }).map((_, i) => (
                   <ProductCardSkeleton key={`skeleton-${i}`} />
@@ -447,7 +428,6 @@ function AllProductsPage() {
                   <ProductCard
                     key={product.id}
                     product={product}
-                    user={user}
                     addToCart={addToCart}
                   />
                 ))}

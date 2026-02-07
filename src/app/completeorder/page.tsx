@@ -26,7 +26,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useCart } from "@/context/CartContext";
+import { useGetCartQuery } from "@/Redux/Services/CartApi";
 import axiosInstance from "@/lib/Api";
 import toast from "react-hot-toast";
 import CompleteOrderSkeleton from "@/components/CompleteOrderSkeleton";
@@ -42,42 +42,18 @@ import {
 } from "lucide-react";
 import { checkoutSchema, type CheckoutFormValues } from "@/lib/zodValidation";
 import { wilayas, shippingOptions } from "@/lib/data";
-import product1 from '@assets/product-1.png';
-import product5 from '@assets/product-5.png';
-import product8 from '@assets/product-8.png';
 
 function CompleteOrder() {
-  const { cart, total, loading } = useCart();
+  const { data: cartData, isLoading } = useGetCartQuery(undefined);
+  const cart = cartData?.cartItems || [];
+  const total = cartData?.total || 0;
   const router = useRouter();
   const [submitting, setSubmitting] = useState(false);
 
-  // Mock cart data - remove this when API is connected
-  const mockCart = [
-    {
-      productId: "1",
-      name: "Premium Wireless Headphones",
-      price: 199.99,
-      quantity: 2,
-      image: product1
-    },
-    {
-      productId: "2",
-      name: "Smart Watch Series 7",
-      price: 399.99,
-      quantity: 1,
-      image: product5
-    },
-    {
-      productId: "3",
-      name: "Ultra HD 4K Webcam",
-      price: 149.99,
-      quantity: 3,
-      image: product8
-    }
-  ];
 
-  const displayCart = cart.length > 0 ? cart : mockCart;
-  const mockTotal = mockCart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+
+  const displayCart = cart.length > 0 ? cart : [];
+  const mockTotal = 0;
   const displayTotal = total > 0 ? total : mockTotal;
 
   // Enhanced shipping options with icons
@@ -118,7 +94,7 @@ function CompleteOrder() {
     };
   }, [selectedShippingMethod, displayTotal]);
 
-  const onSubmit = useCallback(
+  const SubmitOrder = useCallback(
     async (data: CheckoutFormValues) => {
       try {
         setSubmitting(true);
@@ -138,11 +114,11 @@ function CompleteOrder() {
     [displayCart, grandTotal, router],
   );
 
-  if (loading) {
+  if (isLoading) {
     return <CompleteOrderSkeleton />;
   }
 
-  if (displayCart.length === 0 && !loading) {
+  if (cart.length === 0 && !isLoading) {
     return (
       <main
         className="container mx-auto px-4 py-16 text-center"
@@ -160,7 +136,7 @@ function CompleteOrder() {
           Add items to your cart before checking out
         </p>
         <Button
-          onClick={() => router.push("/")}
+          onClick={() => router.push("/products")}
           size="lg"
           variant="default"
           className=""
@@ -202,7 +178,7 @@ function CompleteOrder() {
           <section className="lg:col-span-2" aria-label="Checkout form">
             <Form {...form}>
               <form
-                onSubmit={form.handleSubmit(onSubmit)}
+                onSubmit={form.handleSubmit(SubmitOrder)}
                 className="space-y-6"
                 aria-label="Complete order form"
               >
@@ -495,8 +471,8 @@ function CompleteOrder() {
                     <div key={item.productId} className="flex gap-3">
                       <div className="relative  w-16 h-16 bg-muted rounded flex-shrink-0">
                         <Image
-                          src={item.image}
-                          alt={item.name}
+                          src={item.product.image}
+                          alt={item.product.name}
                           className="w-full h-full object-contain p-1"
                           loading="lazy"
                           width={64}
@@ -512,10 +488,10 @@ function CompleteOrder() {
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium line-clamp-2">
-                          {item.name}
+                          {item.product.name}
                         </p>
                         <p className="text-sm text-muted-foreground">
-                          ${item.price.toFixed(2)}
+                          ${item.product.price.toFixed(2)}
                         </p>
                       </div>
                     </div>

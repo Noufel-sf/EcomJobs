@@ -14,10 +14,11 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import axiosInstance from '@/lib/Api';
 import toast from 'react-hot-toast';
-import { useAuth } from '@/context/AuthContext';
 import { ButtonLoading } from '@/components/ui/ButtonLoading';
+import { useLoginMutation } from '@/Redux/Services/AuthApi';
+import { useAppDispatch } from '@/Redux/hooks';
+import { setCredentials } from '@/Redux/Slices/AuthSlice';
 import { Lock, Mail, Eye, EyeOff, ShieldCheck } from 'lucide-react';
 
 interface LoginPageProps {
@@ -26,28 +27,21 @@ interface LoginPageProps {
 
 const LoginPage: React.FC<LoginPageProps> = ({ className, ...props }) => {
   const router = useRouter();
+  const dispatch = useAppDispatch();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const { setUser, loading, setLoading } = useAuth();
+  const [login, { isLoading }] = useLoginMutation();
 
   const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    setLoading(true);
     try {
-      const res = await axiosInstance.post('/auth/login', {
-        email,
-        password,
-      });
-      const data = res.data;
-      setUser(data.user);
+      const result = await login({ email, password }).unwrap();
+      dispatch(setCredentials({ user: result.user }));
       toast.success('Login Successful 🎉');
       router.push('/');
-    } catch (error) {
-      const err = error as { response?: { data?: { message?: string } } };
-      toast.error(err?.response?.data?.message || 'Login failed. Please try again.');
-    } finally {
-      setLoading(false);
+    } catch (error: any) {
+      toast.error(error?.data?.message || 'Login failed. Please try again.');
     }
   };
 
@@ -108,7 +102,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ className, ...props }) => {
                         autoComplete="email"
                         aria-required="true"
                         aria-label="Email address"
-                        disabled={loading}
+                        disabled={isLoading}
                       />
                     </div>
 
@@ -140,7 +134,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ className, ...props }) => {
                           autoComplete="current-password"
                           aria-required="true"
                           aria-label="Password"
-                          disabled={loading}
+                          disabled={isLoading}
                         />
                         <button
                           type="button"
@@ -160,7 +154,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ className, ...props }) => {
 
                     {/* Submit Button */}
                     <div className="flex flex-col gap-3 pt-2">
-                      {loading ? (
+                      {isLoading ? (
                         <ButtonLoading />
                       ) : (
                         <Button 

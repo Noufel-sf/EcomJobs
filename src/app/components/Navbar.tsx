@@ -20,9 +20,11 @@ import {
   NavigationMenuList,
   NavigationMenuTrigger,
 } from "@/components/ui/navigation-menu";
-import { useAuth } from "@/context/AuthContext";
 import Api from "@/lib/Api";
-import { useCart } from "@/context/CartContext";
+import { useGetCartQuery } from "@/Redux/Services/CartApi";
+import { useLogoutMutation } from "@/Redux/Services/AuthApi";
+import { useAppSelector, useAppDispatch } from "@/Redux/hooks";
+import { logout as logoutAction } from "@/Redux/Slices/AuthSlice";
 import toast from "react-hot-toast";
 
 interface ListItemProps {
@@ -52,13 +54,25 @@ const Navbar = memo(function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
   const { setTheme } = useTheme();
   const [categories, setCategories] = useState<any[]>([]);
-  const { user, logout } = useAuth();
-  const { cart } = useCart();
+  const dispatch = useAppDispatch();
+  const user = useAppSelector((state) => state.auth.user);
+  const [logoutMutation] = useLogoutMutation();
+  const { data: cartData } = useGetCartQuery(undefined);
   const [searchTerm, setSearchTerm] = useState("");
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [searchOpen, setSearchOpen] = useState(false);
 
-  const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
+  const handleLogout = async () => {
+    try {
+      await logoutMutation().unwrap();
+      dispatch(logoutAction());
+      toast.success("Logged out successfully");
+    } catch (error) {
+      toast.error("Logout failed");
+    }
+  };
+
+  const totalItems = cartData?.cartItems?.reduce((sum: number, item: any) => sum + item.quantity, 0) || 0;
 
   const fetchCategories = async () => {
     try {
@@ -225,7 +239,7 @@ const Navbar = memo(function Navbar() {
                     </Link>
                     <DropdownMenuItem
                       className="cursor-pointer hover:text-red-400 transition duration-300"
-                      onClick={logout}
+                      onClick={handleLogout}
                       inset={false}
                     >
                       Logout
@@ -380,7 +394,7 @@ const Navbar = memo(function Navbar() {
                   variant="ghost"
                   size="default"
                   className="justify-start px-3 w-full text-left"
-                  onClick={logout}
+                  onClick={handleLogout}
                 >
                   <span className="text-base font-medium text-zinc-900 dark:text-white">
                     Logout

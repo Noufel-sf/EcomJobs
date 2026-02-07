@@ -43,7 +43,7 @@ import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { MoreHorizontal, ArrowUpDown, ChevronDown } from 'lucide-react';
 import AdminSidebarLayout from '@/components/AdminSidebarLayout';
-import { useAuth } from '@/context/AuthContext';
+import { useAppSelector } from '@/Redux/hooks';
 import axiosInstance from '@/lib/Api';
 import toast from 'react-hot-toast';
 import { ButtonLoading } from '@/components/ui/ButtonLoading';
@@ -142,7 +142,7 @@ export default function AdminCategories() {
     fetchCategories();
   }, []);
 
-  const { user } = useAuth();
+  const user = useAppSelector((state) => state.auth.user);
   const [sorting, setSorting] = React.useState([]);
   const [columnFilters, setColumnFilters] = React.useState([]);
   const [columnVisibility, setColumnVisibility] = React.useState({});

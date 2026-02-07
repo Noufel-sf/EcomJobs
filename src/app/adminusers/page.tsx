@@ -1,4 +1,5 @@
 'use client';
+import { useState , useEffect } from 'react';
 
 import {
   getCoreRowModel,
@@ -42,31 +43,28 @@ import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/animate-ui/base/checkbox';
 import { MoreHorizontal, ArrowUpDown, ChevronDown } from 'lucide-react';
 import AdminSidebarLayout from '@/components/AdminSidebarLayout';
-import { useAuth } from '@/context/AuthContext';
+import { useAppSelector } from '@/Redux/hooks';
 import axiosInstance from '@/lib/Api';
 import toast from 'react-hot-toast';
 import { ButtonLoading } from '@/components/ui/ButtonLoading';
 import {
   Sheet,
-  SheetClose,
   SheetContent,
   SheetDescription,
-  SheetFooter,
   SheetHeader,
   SheetTitle,
-  SheetTrigger,
 } from '@/components/ui/sheet';
 import AdminDataTableSkeleton from '@/components/AdminDataTableSkeleton';
 
 export default function AdminUsers() {
-  const [data, setData] = React.useState([]);
-  const [loading, setLoading] = React.useState(false);
-  const [editMode, setEditMode] = React.useState(false);
-  const [editSheetOpen, setEditSheetOpen] = React.useState(false);
-  const [open, setOpen] = React.useState(false);
-  const [selectedUser, setSelectedUser] = React.useState(null);
-  const [infoForm, setInfoForm] = React.useState({ name: '', email: '' });
-  const [passwordForm, setPasswordForm] = React.useState({ newPassword: '' });
+  const [data, setData] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [editMode, setEditMode] = useState(false);
+  const [editSheetOpen, setEditSheetOpen] = useState(false);
+  const [open, setOpen] = useState(false);
+  const [selectedUser, setSelectedUser] = useState(null);
+  const [infoForm, setInfoForm] = useState({ name: '', email: '' });
+  const [passwordForm, setPasswordForm] = useState({ newPassword: '' });
 
   const fetchUsers = async () => {
     setLoading(true);
@@ -74,7 +72,7 @@ export default function AdminUsers() {
       const { data } = await axiosInstance.get('/user');
       setData(data.users);
     } catch (error) {
-      toast.error(error.response?.data);
+      toast.error(error.response?.data?.message || 'Failed to fetch users');
     } finally {
       setLoading(false);
     }
@@ -110,15 +108,15 @@ export default function AdminUsers() {
     }
   };
 
-  React.useEffect(() => {
+  useEffect(() => {
     fetchUsers();
   }, []);
 
-  const { user } = useAuth();
-  const [sorting, setSorting] = React.useState([]);
-  const [columnFilters, setColumnFilters] = React.useState([]);
-  const [columnVisibility, setColumnVisibility] = React.useState({});
-  const [rowSelection, setRowSelection] = React.useState({});
+  const user = useAppSelector((state) => state.auth.user);
+  const [sorting, setSorting] = useState([]);
+  const [columnFilters, setColumnFilters] = useState([]);
+  const [columnVisibility, setColumnVisibility] = useState({});
+  const [rowSelection, setRowSelection] = useState({});
 
   const columns = [
     {

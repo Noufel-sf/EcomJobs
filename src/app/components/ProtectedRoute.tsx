@@ -1,6 +1,6 @@
 'use client';
 
-import { useAuth } from '@/context/AuthContext';
+import { useAppSelector } from '@/Redux/hooks';
 import { useRouter } from 'next/navigation';
 import { Spinner } from './ui/Spinner';
 import { useEffect } from 'react';
@@ -10,7 +10,8 @@ interface ProtectedRouteProps {
 }
 
 const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
-  const { user, loading } = useAuth();
+  const user = useAppSelector((state) => state.auth.user);
+  const loading = useAppSelector((state) => state.auth.loading);
   const router = useRouter();
 
   useEffect(() => {

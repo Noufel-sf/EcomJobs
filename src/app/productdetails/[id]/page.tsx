@@ -17,13 +17,14 @@ import {
   ShoppingCart,
 } from "lucide-react";
 import SingleProductSkeleton from "@/components/SingleProductSkeleton";
-import { useCart } from "@/context/CartContext";
-import { useAuth } from "@/context/AuthContext";
+import { useAddToCartMutation } from "@/Redux/Services/CartApi";
+import { useAppSelector } from "@/Redux/hooks";
 import { productThumbnails, shopOwnerInfo } from "@/lib/data";
 import { Swiper, SwiperSlide } from "swiper/react";
 import Image from "next/image";
 import { Navigation, Thumbs, Zoom } from "swiper/modules";
 import "swiper/css";
+import toast from "react-hot-toast";
 
 import "swiper/css/navigation";
 import "swiper/css/pagination";
@@ -37,8 +38,8 @@ const SingleProduct = () => {
   const [loading, setLoading] = useState(false);
   const [selectedSize, setSelectedSize] = useState<string>("");
   const [thumbsSwiper, setThumbsSwiper] = useState<SwiperInstance>(null);
-  const { addToCart } = useCart();
-  const { user } = useAuth();
+  const [addToCart] = useAddToCartMutation();
+  const user = useAppSelector((state) => state.auth.user);
   let router = useRouter();
 
   // Mock product data
@@ -68,11 +69,15 @@ const SingleProduct = () => {
   };
 
   const handleAddToCart = useCallback(() => {
-    // if (!user) {
-    //   router.push("/login");
-    //   return;
-    // }
-    addToCart(singleProduct?.id);
+  
+    addToCart(singleProduct?.id)
+      .unwrap()
+      .then(() => {
+        toast.success("Added to cart");
+      })
+      .catch((error: any) => {
+        toast.error(error?.data?.message || "Failed to add to cart");
+      });
   }, [user, addToCart]);
 
   // if (isError) {

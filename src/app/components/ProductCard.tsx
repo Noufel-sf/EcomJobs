@@ -28,7 +28,7 @@ export const ProductCard = memo(function ProductCard({
     averageRating?: number;
     numOfReviews?: number;
   };
-  addToCart: (id: string) => void;
+  addToCart: (id: string) => void | Promise<void>;
 }) {
 
   return (

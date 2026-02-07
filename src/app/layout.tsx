@@ -2,10 +2,11 @@ import type { Metadata } from "next";
 import { Lexend_Deca } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/context/ThemeContext";
-import { AuthProvider } from "@/context/AuthContext";
-import { CartProvider } from "@/context/CartContext";
 import { Toaster } from "@/components/Toaster";
 import LayoutWrapper from "@/lib/Layout";
+import { ReduxProvider } from "./Redux/ReduxProvider";
+
+
 
 const LexendDeca = Lexend_Deca({
   variable: "--font-lexend-deca",
@@ -78,14 +79,12 @@ export default function RootLayout({
         className={`antialiased ${LexendDeca.variable}`}
       >
         <ThemeProvider>
-          <AuthProvider>
-            <CartProvider>
-              <LayoutWrapper>
-                {children}
-              </LayoutWrapper>
-              <Toaster />
-            </CartProvider>
-          </AuthProvider>
+          <ReduxProvider>
+            <LayoutWrapper>
+              {children}
+            </LayoutWrapper>
+            <Toaster />
+          </ReduxProvider>
         </ThemeProvider>
       </body>
     </html>

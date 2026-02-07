@@ -7,13 +7,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { SkeletonItem, SkeletonSummary } from "@/components/CartItemsSkeleton";
-import { useCart } from "@/context/CartContext";
+import { useGetCartQuery, useUpdateCartItemMutation, useDeleteCartItemMutation, useClearCartMutation } from "@/Redux/Services/CartApi";
 import toast from "react-hot-toast";
 import CartItem from "@/components/CartItem";
 import Api from "@/lib/Api";
-import product1 from '@assets/product-1.png';
-import product5 from '@assets/product-5.png';
-import product8 from '@assets/product-8.png';
 
 import {
   ShoppingBag,
@@ -25,70 +22,58 @@ import {
 } from "lucide-react";
 
 function CartPage() {
-  const {
-    cart,
-    total,
-    updateCartItems,
-    deleteCartItem,
-    clearCart,
-  } = useCart();
+  const { data: cartData, isLoading } = useGetCartQuery(undefined);
+  const [updateCartItem] = useUpdateCartItemMutation();
+  const [deleteCartItemMutation] = useDeleteCartItemMutation();
+  const [clearCartMutation] = useClearCartMutation();
 
-  // Mock cart data - remove this when API is connected
-  const mockCart = [
-    {
-      productId: "1",
-      name: "Premium Wireless Headphones",
-      price: 199.99,
-      quantity: 2,
-      image: product1
-    },
-    {
-      productId: "2",
-      name: "Smart Watch Series 7",
-      price: 399.99,
-      quantity: 1,
-      image: product5
-    },
-    {
-    productId: "3",
-      name: "Ultra HD 4K Webcam",
-      price: 149.99,
-      quantity: 3,
-      image: product8
-    }
-  ];
+  const cart = cartData?.cartItems || [];
+  console.log("the cart is " , cart);
+  
+  const total = cartData?.total || 0;
 
-  const displayCart = cart.length > 0 ? cart : mockCart;
-  const mockTotal = mockCart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-  const displayTotal = total > 0 ? total : mockTotal;
+  const Total = cart.reduce((sum : number, item) => sum + (item.price * item.quantity), 0);
+  const displayTotal = total > 0 ? total : Total;
 
   const router = useRouter();
 
   const handleQuantityUpdate = useCallback(
     async (productId: string, newVal: number, currentVal: number) => {
-      if (newVal < 1) {
-        await deleteCartItem(productId);
-        toast.success("Item removed from cart");
-      } else {
-        const action = newVal > currentVal ? "increase" : "decrease";
-        await updateCartItems(productId, action);
+      try {
+        if (newVal < 1) {
+          await deleteCartItemMutation(productId).unwrap();
+          toast.success("Item removed from cart");
+        } else {
+          const action = newVal > currentVal ? "increase" : "decrease";
+          await updateCartItem({ productId, action }).unwrap();
+        }
+      } catch (error: any) {
+        toast.error(error?.data?.message || "Failed to update cart");
       }
     },
-    [deleteCartItem, updateCartItems],
+    [deleteCartItemMutation, updateCartItem],
   );
 
   const handleDeleteCartItem = useCallback(
     async (productId: string) => {
-      await deleteCartItem(productId);
-      toast.success("Item removed from cart");
+      try {
+        await deleteCartItemMutation(productId).unwrap();
+        toast.success("Item removed from cart");
+      } catch (error: any) {
+        toast.error(error?.data?.message || "Failed to remove item");
+      }
     },
-    [deleteCartItem],
+    [deleteCartItemMutation],
   );
 
   const handleClearCart = useCallback(async () => {
-    await clearCart();
-    toast.success("Cart cleared");
-  }, [clearCart]);
+    try {
+      await clearCartMutation().unwrap();
+      toast.success("Cart cleared");
+    } catch (error: any) {
+      toast.error(error?.data?.message || "Failed to clear cart");
+    }
+  }, [clearCartMutation]);
 
   const checkOut = useCallback(async () => {
     try {
@@ -133,8 +118,7 @@ function CartPage() {
             Shopping Cart
           </h1>
           <p className="text-muted-foreground" role="status" aria-live="polite">
-            {displayCart.length} {displayCart.length === 1 ? "item" : "items"} in
-            your cart
+            {isLoading ? "Loading..." : `${cart.length} ${cart.length === 1 ? "item" : "items"} in your cart`}
           </p>
         </header>
 
@@ -144,13 +128,20 @@ function CartPage() {
             className="lg:col-span-2 space-y-4"
             aria-label="Shopping cart items"
           >
-          
+            {isLoading ? (
+              <>
+                {/* Loading Skeletons */}
+                {[...Array(3)].map((_, index) => (
+                  <SkeletonItem key={index} />
+                ))}
+              </>
+            ) : cart.length > 0 ? (
               <>
                 {/* Cart items */}
-                {displayCart.map((item) => (
+                {cart.map((item) => (
                   <CartItem
                     key={item.productId}
-                    item={item}
+                    item={item.product}
                     handleQuantityUpdate={handleQuantityUpdate}
                     handleDeleteCartItem={handleDeleteCartItem}
                   />
@@ -169,7 +160,7 @@ function CartPage() {
                   Clear Cart
                 </Button>
               </>
-           
+            ) : (
               <Card
                 className="p-12 text-center"
                 role="status"
@@ -196,14 +187,15 @@ function CartPage() {
                   <ArrowRight className="ml-2 w-4 h-4" aria-hidden="true" />
                 </Button>
               </Card>
-           
+            )}
           </section>
 
           {/* Right: Order Summary */}
           <aside className="space-y-4" aria-label="Order summary">
-           
-                <>
-                <Card className="sticky top-4">
+            {isLoading ? (
+              <SkeletonSummary />
+            ) : cart.length > 0 ? (
+              <Card className="sticky top-4">
                   <CardHeader className="">
                     <CardTitle className="flex items-center gap-2">
                       <CreditCard className="w-5 h-5" aria-hidden="true" />
@@ -269,7 +261,7 @@ function CartPage() {
                     </div>
                   </CardContent>
                 </Card>
-              </>
+            ) : null}
           </aside>
         </div>
       </div>
