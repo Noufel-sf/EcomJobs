@@ -14,36 +14,31 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { ButtonLoading } from "@/components/ui/ButtonLoading";
-import { Plus, X } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Plus, X, ChevronDown } from "lucide-react";
 import Image from "next/image";
+import type { Categorie, Product } from "@/lib/DatabaseTypes";
 
-interface Category {
-  id: string;
-  title: string;
-}
 
-interface ProductColor {
-  name: string;
-  hex: string;
-}
-
-interface Product {
-  id: string;
-  name?: string;
-  description?: string;
-  price?: number;
-  originalPrice?: number;
-  categoryId?: string;
-  images?: string[];
+interface ProductWithRelations extends Product {
+  extra_images?: string[];
   sizes?: string[];
-  colors?: ProductColor[];
+  colors?: string[];
 }
 
 interface UpdateProductUiProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  categories: Category[];
-  initialProduct: Product | null;
+  categories: Categorie[];
+  initialProduct: ProductWithRelations | null;
   onSubmit: (id: string, formData: FormData) => Promise<void>;
   loading: boolean;
 }
@@ -56,67 +51,98 @@ export default function UpdateProductUi({
   onSubmit,
   loading,
 }: UpdateProductUiProps) {
-  // Internal state management
+
+
   const [name, setName] = useState('');
-  const [description, setDescription] = useState('');
+  const [smallDesc, setSmallDesc] = useState('');
+  const [bigDesc, setBigDesc] = useState('');
   const [price, setPrice] = useState('');
-  const [originalPrice, setOriginalPrice] = useState('');
-  const [categoryId, setCategoryId] = useState('');
-  const [images, setImages] = useState<(File | null)[]>([null, null, null, null]);
-  const [imagePreviews, setImagePreviews] = useState<(string | null)[]>([null, null, null, null]);
+  const [classification, setClassification] = useState('');
+  const [available, setAvailable] = useState(true);
+  const [sponsored, setSponsored] = useState(false);
+  const [mainImage, setMainImage] = useState<File | null>(null);
+  const [mainImagePreview, setMainImagePreview] = useState<string | null>(null);
+  const [currentMainImage, setCurrentMainImage] = useState<string | null>(null);
+  const [extraImages, setExtraImages] = useState<(File | null)[]>([null, null, null]);
+  const [extraImagePreviews, setExtraImagePreviews] = useState<(string | null)[]>([null, null, null]);
+  const [currentExtraImages, setCurrentExtraImages] = useState<string[]>([]);
   const [sizes, setSizes] = useState<string[]>([]);
-  const [colors, setColors] = useState<ProductColor[]>([]);
-  const [newColorName, setNewColorName] = useState('');
-  const [newColorHex, setNewColorHex] = useState('#000000');
+  const [colors, setColors] = useState<string[]>([]);
+  const [newColor, setNewColor] = useState('');
 
   // Populate form when initialProduct changes
   useEffect(() => {
     if (initialProduct) {
       setName(initialProduct.name || '');
-      setDescription(initialProduct.description || '');
+      setSmallDesc(initialProduct.small_desc || '');
+      setBigDesc(initialProduct.big_desc || '');
       setPrice(initialProduct.price?.toString() || '');
-      setOriginalPrice(initialProduct.originalPrice?.toString() || '');
-      setCategoryId(initialProduct.categoryId || '');
+      setClassification(initialProduct.classification || '');
+      setAvailable(initialProduct.available ?? true);
+      setSponsored(initialProduct.sponsored ?? false);
+      setCurrentMainImage(initialProduct.main_img || null);
+      setCurrentExtraImages(initialProduct.extra_images || []);
       setSizes(initialProduct.sizes || []);
       setColors(initialProduct.colors || []);
-      setImages([null, null, null, null]);
-      setImagePreviews([null, null, null, null]);
+      setMainImage(null);
+      setMainImagePreview(null);
+      setExtraImages([null, null, null]);
+      setExtraImagePreviews([null, null, null]);
     }
   }, [initialProduct]);
 
+
   const resetForm = () => {
     setName('');
-    setDescription('');
+    setSmallDesc('');
+    setBigDesc('');
     setPrice('');
-    setOriginalPrice('');
-    setCategoryId('');
-    setImages([null, null, null, null]);
-    setImagePreviews([null, null, null, null]);
+    setClassification('');
+    setAvailable(true);
+    setSponsored(false);
+    setMainImage(null);
+    setMainImagePreview(null);
+    setCurrentMainImage(null);
+    setExtraImages([null, null, null]);
+    setExtraImagePreviews([null, null, null]);
+    setCurrentExtraImages([]);
     setSizes([]);
     setColors([]);
-    setNewColorName('');
-    setNewColorHex('#000000');
+    setNewColor('');
   };
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+  const handleUpdateProduct = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     
     if (!initialProduct?.id) return;
     
     const formData = new FormData();
     formData.append('name', name);
-    formData.append('description', description);
+    formData.append('small_desc', smallDesc);
+    formData.append('big_desc', bigDesc);
     formData.append('price', price);
-    formData.append('originalPrice', originalPrice);
-    formData.append('categoryId', categoryId);
+    formData.append('classification', classification);
+    formData.append('available', String(available));
+    formData.append('sponsored', String(sponsored));
     formData.append('sizes', JSON.stringify(sizes));
     formData.append('colors', JSON.stringify(colors));
     
-    images.forEach((image) => {
+    if (mainImage) {
+      formData.append('main_img', mainImage);
+    }
+    
+    extraImages.forEach((image) => {
       if (image) {
-        formData.append('images', image);
+        formData.append('extra_images', image);
       }
     });
+
+    // Debug: Log FormData contents properly
+    console.log("product data:");
+    for (const [key, value] of formData.entries()) {
+      console.log(`  ${key}:`, value);
+    }
+    
 
     await onSubmit(initialProduct.id, formData);
   };
@@ -137,10 +163,9 @@ export default function UpdateProductUi({
   };
 
   const addColor = () => {
-    if (newColorName.trim() && newColorHex) {
-      setColors([...colors, { name: newColorName.trim(), hex: newColorHex }]);
-      setNewColorName('');
-      setNewColorHex('#000000');
+    if (newColor.trim() && !colors.includes(newColor.trim())) {
+      setColors([...colors, newColor.trim()]);
+      setNewColor('');
     }
   };
 
@@ -148,41 +173,60 @@ export default function UpdateProductUi({
     setColors(colors.filter((_, i) => i !== index));
   };
 
-  const handleImageChange = (index: number, file: File | undefined) => {
-    const newImages = [...images];
-    newImages[index] = file || null;
-    setImages(newImages);
-
-    // Create preview
+  const handleMainImageChange = (file: File | undefined) => {
+    setMainImage(file || null);
     if (file) {
       const reader = new FileReader();
       reader.onloadend = () => {
-        const newPreviews = [...imagePreviews];
-        newPreviews[index] = reader.result as string;
-        setImagePreviews(newPreviews);
+        setMainImagePreview(reader.result as string);
       };
       reader.readAsDataURL(file);
     } else {
-      const newPreviews = [...imagePreviews];
-      newPreviews[index] = null;
-      setImagePreviews(newPreviews);
+      setMainImagePreview(null);
     }
   };
 
-  const removeImage = (index: number) => {
-    const newImages = [...images];
-    newImages[index] = null;
-    setImages(newImages);
+  const handleExtraImageChange = (index: number, file: File | undefined) => {
+    const newImages = [...extraImages];
+    newImages[index] = file || null;
+    setExtraImages(newImages);
 
-    const newPreviews = [...imagePreviews];
-    newPreviews[index] = null;
-    setImagePreviews(newPreviews);
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const newPreviews = [...extraImagePreviews];
+        newPreviews[index] = reader.result as string;
+        setExtraImagePreviews(newPreviews);
+      };
+      reader.readAsDataURL(file);
+    } else {
+      const newPreviews = [...extraImagePreviews];
+      newPreviews[index] = null;
+      setExtraImagePreviews(newPreviews);
+    }
   };
+
+  const removeMainImage = () => {
+    setMainImage(null);
+    setMainImagePreview(null);
+  };
+
+  const removeExtraImage = (index: number) => {
+    const newImages = [...extraImages];
+    newImages[index] = null;
+    setExtraImages(newImages);
+
+    const newPreviews = [...extraImagePreviews];
+    newPreviews[index] = null;
+    setExtraImagePreviews(newPreviews);
+  };
+
+
 
   return (
     <Sheet open={open} onOpenChange={handleOpenChange}>
       <SheetContent className="sm:max-w-250 p-12 overflow-y-auto">
-        <form onSubmit={handleSubmit}>
+        <form onSubmit={handleUpdateProduct}>
           <SheetHeader>
             <SheetTitle>Edit Product</SheetTitle>
             <SheetDescription>
@@ -198,15 +242,27 @@ export default function UpdateProductUi({
                 <Input
                   id="name"
                   value={name}
-                  onChange={(e) => setName(e.target.value)}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setName(e.target.value)}
                 />
               </div>
               <div className="grid gap-3">
-                <Label htmlFor="description">Description</Label>
+                <Label htmlFor="smallDesc">Short Description</Label>
                 <Input
-                  id="description"
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
+                  id="smallDesc"
+                  value={smallDesc}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSmallDesc(e.target.value)}
+                  placeholder="Brief product description"
+                />
+              </div>
+              <div className="grid gap-3">
+                <Label htmlFor="bigDesc">Full Description</Label>
+                <textarea
+                  id="bigDesc"
+                  value={bigDesc}
+                  onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setBigDesc(e.target.value)}
+                  placeholder="Detailed product description (optional)"
+                  rows={4}
+                  className="border rounded-md px-3 py-2 text-sm"
                 />
               </div>
               <div className="grid gap-3">
@@ -214,72 +270,117 @@ export default function UpdateProductUi({
                 <Input
                   id="price"
                   type="number"
+                  step="0.01"
                   value={price}
-                  onChange={(e) => setPrice(e.target.value)}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPrice(e.target.value)}
                 />
               </div>
-            
+
+              {/* Toggles for available and sponsored */}
+              <div className="flex gap-6">
+                <div className="flex items-center gap-2">
+                  <Checkbox
+                    id="available"
+                    checked={available}
+                    onCheckedChange={(checked) => setAvailable(checked === true)}
+                  />
+                  <Label htmlFor="available">Available</Label>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Checkbox
+                    id="sponsored"
+                    checked={sponsored}
+                    onCheckedChange={(checked) => setSponsored(checked === true)}
+                  />
+                  <Label htmlFor="sponsored">Sponsored</Label>
+                </div>
+              </div>
+
+              {/* Main Image */}
               <div className="grid gap-3">
-                <Label htmlFor="originalPrice">Original Price</Label>
+                <Label htmlFor="mainImage">Main Product Image</Label>
                 <Input
-                  id="originalPrice"
-                  type="number"
-                  value={originalPrice}
-                  onChange={(e) => setOriginalPrice(e.target.value)}
+                  id="mainImage"
+                  type="file"
+                  accept="image/*"
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleMainImageChange(e.target.files?.[0])}
+                  className="cursor-pointer"
                 />
+                {mainImagePreview && (
+                  <div className="relative w-fit">
+                    <Image
+                      width={400}
+                      height={300}
+                      src={mainImagePreview}
+                      alt="Main image preview"
+                      className="w-48 h-32 object-cover rounded border"
+                    />
+                    <button
+                      type="button"
+                      onClick={removeMainImage}
+                      className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 hover:bg-red-600"
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
+                  </div>
+                )}
+                {currentMainImage && !mainImagePreview && (
+                  <div className="mt-2">
+                    <p className="text-xs text-muted-foreground mb-1">Current:</p>
+                    <Image
+                      width={400}
+                      height={128}
+                      src={currentMainImage}
+                      alt="Current main image"
+                      className="w-48 h-32 object-cover rounded border"
+                    />
+                  </div>
+                )}
               </div>
+
+              {/* Extra Images */}
               <div className="grid gap-3">
-                <Label htmlFor="images">Product Images (Up to 4)</Label>
-                <div className="grid grid-cols-2 gap-4">
-                  {[0, 1, 2, 3].map((index) => (
+                <Label>Extra Images (Up to 3)</Label>
+                <div className="grid grid-cols-3 gap-4">
+                  {[0, 1, 2].map((index) => (
                     <div key={index} className="space-y-2">
-                      <Label htmlFor={`edit-image-${index}`} className="text-sm text-muted-foreground">
+                      <Label htmlFor={`extra-image-${index}`} className="text-sm text-muted-foreground">
                         Image {index + 1}
                       </Label>
                       <Input
-                        id={`edit-image-${index}`}
+                        id={`extra-image-${index}`}
                         type="file"
                         accept="image/*"
-                        onChange={(e) => handleImageChange(index, e.target.files[0])}
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleExtraImageChange(index, e.target.files?.[0])}
                         className="cursor-pointer"
                       />
-                      {imagePreviews[index] && (
+                      {extraImagePreviews[index] && (
                         <div className="relative">
-                          {/* eslint-disable-next-line @next/next/no-img-element */}
-                          <img
-                            src={imagePreviews[index] as string}
+                          <Image
+                            width={400}
+                            height={300}
+                            src={extraImagePreviews[index] as string}
                             alt={`Preview ${index + 1}`}
-                            className="w-full h-32 object-cover rounded border"
+                            className="w-full h-24 object-cover rounded border"
                           />
                           <button
                             type="button"
-                            onClick={() => removeImage(index)}
+                            onClick={() => removeExtraImage(index)}
                             className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 hover:bg-red-600"
                           >
-                            <svg
-                              xmlns="http://www.w3.org/2000/svg"
-                              className="h-4 w-4"
-                              viewBox="0 0 20 20"
-                              fill="currentColor"
-                            >
-                              <path
-                                fillRule="evenodd"
-                                d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
-                                clipRule="evenodd"
-                              />
-                            </svg>
+                            <X className="h-3 w-3" />
                           </button>
                         </div>
                       )}
-                      {initialProduct?.images && initialProduct.images[index] && !imagePreviews[index] && (
+                      {currentExtraImages[index] && !extraImagePreviews[index] && (
                         <div className="mt-2">
                           <p className="text-xs text-muted-foreground mb-1">Current:</p>
                           <Image
                             width={400}
                             height={128}
-                            src={initialProduct.images[index]}
+                            src={currentExtraImages[index]}
                             alt={`Current ${index + 1}`}
-                            className="w-full h-32 object-cover rounded border"
+                            className="w-full h-24 object-cover rounded border"
                           />
                         </div>
                       )}
@@ -287,23 +388,34 @@ export default function UpdateProductUi({
                   ))}
                 </div>
               </div>
+
+              {/* Classification/Category */}
               <div className="grid gap-3">
-                <Label htmlFor="category">Category</Label>
-                <select
-                  id="category"
-                  value={categoryId}
-                  onChange={(e) => setCategoryId(e.target.value)}
-                  className="border px-4 py-2 rounded"
-                >
-                  <option value="">Select category</option>
-                  {categories.map((cat) => (
-                    <option key={cat.id} value={cat.id}>
-                      {cat.title}
-                    </option>
-                  ))}
-                </select>
+                <Label>Category</Label>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline" className="w-full justify-between cursor-pointer">
+                      {classification
+                        ? categories.find((cat) => cat.id === classification)?.name
+                        : "Select category"}
+                      <ChevronDown className="ml-2 h-4 w-4 opacity-50" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent className="w-56">
+                    <DropdownMenuLabel>Categories</DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    {categories.map((cat) => (
+                      <DropdownMenuItem
+                        key={cat.id}
+                        className="cursor-pointer"
+                        onClick={() => setClassification(cat.id)}
+                      >
+                        {cat.name}
+                      </DropdownMenuItem>
+                    ))}
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </div>
-            
             </div>
 
             {/* Right Column - Sizes */}
@@ -369,34 +481,29 @@ export default function UpdateProductUi({
                 <Label>Product Colors</Label>
                 <div className="border rounded-lg p-4 space-y-3">
                   {/* Add new color */}
-                  <div className="space-y-2">
-                    <div className="flex gap-2">
-                      <Input
-                        type="color"
-                        value={newColorHex}
-                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewColorHex(e.target.value)}
-                        className="w-12 h-10 p-1 cursor-pointer"
-                      />
-                      <Input
-                        type="text"
-                        placeholder="Color name"
-                        value={newColorName}
-                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewColorName(e.target.value)}
-                        className="flex-1"
-                      />
-                      <Button
-                        type="button"
-                        variant="secondary"
-                        size="icon"
-                        onClick={addColor}
-                        disabled={!newColorName.trim()}
-                      >
-                        <Plus className="w-4 h-4" />
-                      </Button>
-                    </div>
-                    <p className="text-xs text-muted-foreground">
-                      Selected: {newColorHex}
-                    </p>
+                  <div className="flex gap-2 items-center">
+                    <input
+                      type="color"
+                      value={newColor || '#000000'}
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewColor(e.target.value)}
+                      className="w-12 h-10 rounded border cursor-pointer"
+                    />
+                    <Input
+                      type="text"
+                      placeholder="#000000"
+                      value={newColor}
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewColor(e.target.value)}
+                      className="flex-1"
+                    />
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      size="icon"
+                      onClick={addColor}
+                      disabled={!newColor.trim()}
+                    >
+                      <Plus className="w-4 h-4" />
+                    </Button>
                   </div>
 
                   {/* Color list */}
@@ -405,29 +512,24 @@ export default function UpdateProductUi({
                       <p className="text-sm font-medium text-muted-foreground">
                         Added Colors ({colors.length})
                       </p>
-                      <div className="space-y-2 max-h-[200px] overflow-y-auto">
+                      <div className="flex flex-wrap gap-2">
                         {colors.map((color, index) => (
                           <div
                             key={index}
-                            className="flex items-center gap-2 p-2 rounded bg-muted/50"
+                            className="flex items-center gap-2 px-3 py-1 rounded-full bg-muted/50 border"
                           >
                             <div
-                              className="w-8 h-8 rounded-full border-2 border-border shrink-0"
-                              style={{ backgroundColor: color.hex }}
+                              className="w-4 h-4 rounded-full border"
+                              style={{ backgroundColor: color }}
                             />
-                            <div className="flex-1 min-w-0">
-                              <p className="text-sm font-medium truncate">{color.name}</p>
-                              <p className="text-xs text-muted-foreground">{color.hex}</p>
-                            </div>
-                            <Button
+                            <span className="text-sm">{color}</span>
+                            <button
                               type="button"
-                              variant="ghost"
-                              size="icon"
-                              className="h-8 w-8 text-red-500 hover:text-red-600 hover:bg-red-50"
+                              className="text-red-500 hover:text-red-600"
                               onClick={() => removeColor(index)}
                             >
-                              <X className="w-4 h-4" />
-                            </Button>
+                              <X className="w-3 h-3" />
+                            </button>
                           </div>
                         ))}
                       </div>

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useActionState } from 'react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import {
@@ -15,35 +15,53 @@ import { Label } from '@/components/ui/label';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import toast from 'react-hot-toast';
-import { ButtonLoading } from '@/components/ui/ButtonLoading';
 import { useLoginMutation } from '@/Redux/Services/AuthApi';
 import { useAppDispatch } from '@/Redux/hooks';
 import { setCredentials } from '@/Redux/Slices/AuthSlice';
-import { Lock, Mail, Eye, EyeOff, ShieldCheck } from 'lucide-react';
+import { Lock, Mail, Eye, EyeOff, ShieldCheck, Loader2 } from 'lucide-react';
 
 interface LoginPageProps {
   className?: string;
 }
 
+interface LoginState {
+  error: string | null;
+  success: boolean;
+}
+
+const initialState: LoginState = {
+  error: null,
+  success: false,
+};
+
 const LoginPage: React.FC<LoginPageProps> = ({ className, ...props }) => {
   const router = useRouter();
   const dispatch = useAppDispatch();
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [login, { isLoading }] = useLoginMutation();
+  const [login] = useLoginMutation();
 
-  const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
+  const loginAction = async (
+    prevState: LoginState,
+    formData: FormData
+  ): Promise<LoginState> => {
+    const email = formData.get('email') as string;
+    const password = formData.get('password') as string;
+
     try {
       const result = await login({ email, password }).unwrap();
       dispatch(setCredentials({ user: result.user }));
       toast.success('Login Successful 🎉');
       router.push('/');
-    } catch (error: any) {
-      toast.error(error?.data?.message || 'Login failed. Please try again.');
+      return { error: null, success: true };
+    } catch (error: unknown) {
+      const err = error as { data?: { message?: string } };
+      const message = err?.data?.message || 'Login failed. Please try again.';
+      toast.error(message);
+      return { error: message, success: false };
     }
   };
+
+  const [ formAction, isPending] = useActionState(loginAction, initialState);
 
   return (
     <main className="min-h-screen flex flex-col items-center justify-center px-4 bg-gradient-to-br from-background lg:py-12 via-background to-muted/30">
@@ -82,7 +100,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ className, ...props }) => {
                 </CardDescription>
               </CardHeader>
               <CardContent className="">
-                <form onSubmit={handleLogin} aria-label="Login form">
+                <form action={formAction} aria-label="Login form">
                   <div className="flex flex-col gap-6">
                     {/* Email Field */}
                     <div className="grid gap-3">
@@ -96,13 +114,11 @@ const LoginPage: React.FC<LoginPageProps> = ({ className, ...props }) => {
                         type="email"
                         className="h-11"
                         placeholder="name@example.com"
-                        value={email}
-                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEmail(e.target.value)}
                         required
                         autoComplete="email"
                         aria-required="true"
                         aria-label="Email address"
-                        disabled={isLoading}
+                        disabled={isPending}
                       />
                     </div>
 
@@ -128,13 +144,11 @@ const LoginPage: React.FC<LoginPageProps> = ({ className, ...props }) => {
                           type={showPassword ? 'text' : 'password'}
                           className="h-11 pr-10"
                           placeholder="Enter your password"
-                          value={password}
-                          onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPassword(e.target.value)}
                           required
                           autoComplete="current-password"
                           aria-required="true"
                           aria-label="Password"
-                          disabled={isLoading}
+                          disabled={isPending}
                         />
                         <button
                           type="button"
@@ -154,19 +168,23 @@ const LoginPage: React.FC<LoginPageProps> = ({ className, ...props }) => {
 
                     {/* Submit Button */}
                     <div className="flex flex-col gap-3 pt-2">
-                      {isLoading ? (
-                        <ButtonLoading />
-                      ) : (
-                        <Button 
-                          type="submit" 
-                          className="w-full h-11 font-semibold"
-                          variant="default"
-                          size="lg"
-                          aria-label="Login to your account"
-                        >
-                          Sign In
-                        </Button>
-                      )}
+                      <Button 
+                        type="submit" 
+                        className="w-full h-11 font-semibold"
+                        variant="default"
+                        size="lg"
+                        disabled={isPending}
+                        aria-label={isPending ? 'Signing in...' : 'Login to your account'}
+                      >
+                        {isPending ? (
+                          <>
+                            <Loader2 className="w-4 h-4 mr-2 animate-spin" aria-hidden="true" />
+                            Signing In...
+                          </>
+                        ) : (
+                          'Sign In'
+                        )}
+                      </Button>
                     </div>
                   </div>
 

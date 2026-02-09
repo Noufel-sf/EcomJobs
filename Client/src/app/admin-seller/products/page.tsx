@@ -59,6 +59,9 @@ export default function AdminProducts() {
   // RTK Query
   const { data: productsData, isLoading } = useGetAllProductsQuery(undefined);
   const { data: categories = [] } = useGetCategoriesQuery(undefined);
+  console.log("products" , productsData);
+  
+
 
   const [createProduct, { isLoading: isCreating }] = useCreateProductMutation();
   const [updateProduct, { isLoading: isUpdating }] = useUpdateProductMutation();
@@ -76,6 +79,8 @@ export default function AdminProducts() {
   const handleCreate = async (formData: FormData) => {
     try {
       await createProduct(formData).unwrap();
+      console.log("product Created ", formData);
+      
       toast.success("Product created successfully");
       setOpenCreate(false);
     } catch (error: any) {
@@ -86,6 +91,7 @@ export default function AdminProducts() {
   const handleUpdate = async (id: string, formData: FormData) => {
     try {
       await updateProduct({ id, formData }).unwrap();
+      console.log("product Updated ", formData);
       toast.success("Product updated successfully");
       setOpenEdit(false);
       setSelectedProduct(null);

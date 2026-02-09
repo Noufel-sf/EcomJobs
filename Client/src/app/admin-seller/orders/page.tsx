@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
+import { useGetSellerOrdersQuery,useUpdateOrderStatusMutation, useDeleteOrderMutation } from "@/Redux/Services/OrderApi";
 
 import {
   getCoreRowModel,
@@ -33,37 +34,52 @@ import toast from "react-hot-toast";
 import { getColumns } from "@/components/AdminOrderRow";
 import AdminDataTableSkeleton from "@/components/AdminDataTableSkeleton";
 import OrderDetailsModal from "@/components/OrderDetailsModal";
+import type { Order } from "@/lib/DatabaseTypes";
+
 
 import { mockOrders } from "@/lib/data";
 
-
-
 export default function AdminAllOrders() {
-  const [data, setData] = useState(mockOrders);
-  const [loading, setLoading] = useState(false);
-  const [selectedOrder, setSelectedOrder] = useState<any>(null);
+
+  const { data: ordersData, isLoading: ordersLoading } = useGetSellerOrdersQuery();
+  const orders = ordersData?.orders || [];
+  const [deleteOrderMutation] = useDeleteOrderMutation();
+  const [updateOrderStatus] = useUpdateOrderStatusMutation();
+
+
+  const [data, setData] = useState<Order[]>(mockOrders);
+  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
 
-  const handleStatusChange = async (orderId: number, newStatus: string) => {
+  
+
+  const handleStatusChange = async (orderId: string, newStatus: string) => {
+
+    const previousData = [...data];
+    setData(prevData => 
+      prevData.map(order => 
+        order.id === orderId ? { ...order, status: newStatus } : order
+      )
+    );
+    
     try {
-      setData(prevData => 
-        prevData.map(order => 
-          order.id === orderId ? { ...order, status: newStatus } : order
-        )
-      );
+      await updateOrderStatus({ orderId: String(orderId), status: newStatus }).unwrap();
       toast.success("Order status updated successfully");
     } catch (error: any) {
-      toast.error(error.response?.data?.message || "Failed to update status");
+      // Revert on error
+      setData(previousData);
+      toast.error(error?.data?.message || "Failed to update status");
     }
   };
 
-  const deleteOrder = async (orderId: number) => {
+  const deleteOrder = async (orderId: string) => {
     try {
+      await deleteOrderMutation(String(orderId)).unwrap();
       setData(prevData => prevData.filter(order => order.id !== orderId));
       toast.success("Order deleted successfully");
       setDialogOpen(false);
     } catch (error: any) {
-      toast.error(error.response?.data?.message || "Failed to delete order");
+      toast.error(error?.data?.message || "Failed to delete order");
     }
   }
 
@@ -73,7 +89,7 @@ export default function AdminAllOrders() {
       const exportData = data.map(order => ({
         'Order ID': order.id,
         'Customer Name': order.user?.name || 'N/A',
-        'Customer Email': order.user?.email || 'N/A',
+        'Customer Phone': order.user?.phone || 'N/A',
         'Total Price': `$${order.totalPrice.toFixed(2)}`,
         'Status': order.status.charAt(0).toUpperCase() + order.status.slice(1),
         'Order Date': new Date(order.createdAt).toLocaleString('en-US', {
@@ -126,10 +142,6 @@ export default function AdminAllOrders() {
     }
   };
 
-  useEffect(() => {
-    // Using mock data directly, no need to fetch
-    // fetchOrders();
-  }, []);
 
   const [sorting, setSorting] = useState<any[]>([]);
   const [columnFilters, setColumnFilters] = useState<any[]>([]);
@@ -237,7 +249,7 @@ export default function AdminAllOrders() {
               ))}
             </TableHeader>
             <TableBody className="">
-              {loading ? (
+              {ordersLoading ? (
                 <AdminDataTableSkeleton />
               ) : table.getRowModel().rows?.length ? (
                 table.getRowModel().rows.map((row) => (

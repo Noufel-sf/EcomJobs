@@ -1,6 +1,6 @@
 'use client';
 
-import type { Theme, ThemeProviderContextType, ThemeProviderProps } from '@/lib/Types';
+import type { Theme, ThemeProviderContextType, ThemeProviderProps } from '@/lib/DatabaseTypes';
 import { createContext, useContext, useEffect, useState } from 'react';
 
 const ThemeProviderContext = createContext<ThemeProviderContextType>({

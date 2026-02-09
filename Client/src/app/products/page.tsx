@@ -16,7 +16,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import type { Product } from "@/lib/Types";
+import type { ProductDisplay } from "@/lib/DatabaseTypes";
 import { useAddToCartMutation } from "@/Redux/Services/CartApi";
 import { useGetAllProductsQuery, useGetCategoriesQuery } from "@/Redux/Services/ProductsApi";
 import toast from "react-hot-toast";

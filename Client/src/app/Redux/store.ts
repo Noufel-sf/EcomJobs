@@ -3,6 +3,7 @@ import { cartApi } from "./Services/CartApi";
 import { productsApi } from "./Services/ProductsApi";
 import { orderApi } from "./Services/OrderApi";
 import { authApi } from "./Services/AuthApi";
+import { classificationApi } from "./Services/ClassificationApi";
 import authReducer from "./Slices/AuthSlice";
 
 
@@ -13,6 +14,7 @@ export const store = configureStore({
     [productsApi.reducerPath]: productsApi.reducer,
     [orderApi.reducerPath]: orderApi.reducer,
     [authApi.reducerPath]: authApi.reducer,
+    [classificationApi.reducerPath]: classificationApi.reducer,
   },
 
   middleware: (getDefaultMiddleware) =>
@@ -20,7 +22,8 @@ export const store = configureStore({
       cartApi.middleware,
       productsApi.middleware,
       orderApi.middleware,
-      authApi.middleware
+      authApi.middleware,
+      classificationApi.middleware
     ),
 });
 

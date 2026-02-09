@@ -1,9 +1,8 @@
 'use client';
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import Image from "next/image";
-import { memo } from "react";
+import { memo, useTransition } from "react";
 import {
   Card,
   CardContent,
@@ -11,7 +10,7 @@ import {
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { ShoppingCart} from "lucide-react";
+import { ShoppingCart, Loader2 } from "lucide-react";
 
 export const ProductCard = memo(function ProductCard({
   product,
@@ -20,16 +19,26 @@ export const ProductCard = memo(function ProductCard({
   product: {
     id: string;
     name: string;
-    image: string;
+    image?: string;
+    main_img?: string;
     price: number;
-    originalPrice?: number; // crossed-out price
+    originalPrice?: number;
     currency?: string;
     discountPercent?: number;
     averageRating?: number;
     numOfReviews?: number;
   };
-  addToCart: (id: string) => void | Promise<void>;
+  addToCart: (product: { id: string; name: string; image: string; price: number }) => void | Promise<void>;
 }) {
+  const productImage = product.image || product.main_img || '/placeholder.png';
+  const [isPending, startTransition] = useTransition();
+
+  const handleAddToCart = (e: React.MouseEvent<HTMLButtonElement>) => {
+    e.preventDefault();
+    startTransition(async () => {
+      await addToCart({ id: product.id, name: product.name, image: productImage, price: product.price });
+    });
+  };
 
   return (
     <Card className="h-full border-0 w-full mx-auto overflow-hidden shadow-none">
@@ -37,7 +46,7 @@ export const ProductCard = memo(function ProductCard({
         <CardHeader className="p-0 relative">
           {/* Product Image */}
           <Image
-            src={product.image}
+            src={productImage}
             alt={product.name}
             className="w-full h-38 object-contain"
             width={400}
@@ -80,14 +89,15 @@ export const ProductCard = memo(function ProductCard({
           variant="default"
           size="sm"
           className="flex-1 bg-primary hover:bg-primary/20"
-          onClick={(e: React.MouseEvent<HTMLButtonElement>) => {
-            e.preventDefault();
-          
-            addToCart(product.id);
-          }}
+          onClick={handleAddToCart}
+          disabled={isPending}
         >
-          <ShoppingCart className="mr-2 h-4 w-4" />
-          Add to cart
+          {isPending ? (
+            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+          ) : (
+            <ShoppingCart className="mr-2 h-4 w-4" />
+          )}
+          {isPending ? 'Adding...' : 'Add to cart'}
         </Button>
 
 

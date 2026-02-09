@@ -1,4 +1,8 @@
+import { Order } from '@/types/order';
 // Database Types - Generated from actual database schema
+
+import type { Dispatch, ReactNode, SetStateAction } from "react";
+import type { StaticImageData } from "next/image";
 
 export interface Cart {  // id random uuid
   id: string; // uuid
@@ -33,28 +37,28 @@ export interface ExtraImg {
 }
 
 export interface Order {
-  id: string; // uuid
-  first_name: string; // varchar(100)
-  last_name: string; // varchar(100)
-  phone_number: number; // integer
-  city: string; // varchar(100)
-  state: number | null; // FK to states.id
-  delivery_cost: number | null; // numeric
-  products_cost: number; // numeric
-  total_cost: number | null; // numeric
-  status: string | null; // varchar(255)
-  seller: string | null; // uuid → FK to seller.id
-  // - address: string (street address)
-  // - notes: string (delivery instructions)
+  id: string; 
+  first_name: string; 
+  last_name: string; 
+  phone_number: number; 
+  city: string; 
+  state: number | null; 
+  delivery_cost: number | null; 
+  products_cost: number; 
+  orderItems: ProductList[];
+  total_cost: number | null; 
+  status: "PENDING" | "COMPLETED" | "CANCELED"; 
+  seller: string | null; 
+  notes: string | null; 
 }
 
 export interface Product {
-  id: string; // uuid
-  name: string; // varchar(100)
-  price: number; // numeric
-  main_img: string; // varchar(255)
-  small_desc: string; // varchar(500)
-  big_desc: string | null; // varchar(1000)
+  id: string; 
+  name: string;
+  price: number; 
+  main_img: string; 
+  small_desc: string; 
+  big_desc: string | null; 
   available: boolean;
   sponsored: boolean;
   owner: string | null; // uuid → FK to seller.id
@@ -88,12 +92,8 @@ export interface Seller {
   waiting_orders: number;
   returned_orders: number;
   total_sales: number; // numeric
-  // - phone: string
-  // - business_name: string
-  // - address: string
-  // - city: string
-  // - state: number
-  // - updated_at: Date
+  phone: number; // integer
+
 }
 
 export interface Size {
@@ -129,5 +129,104 @@ export interface Token {
   is_valid: boolean;
   expires_at: Date;
   created_at: Date;
+}
+
+// ==========================================
+// Application Types (UI, Context, State)
+// ==========================================
+
+export interface User {
+  userId: string;
+  name: string;
+  email: string;
+  role: string;
+}
+
+// ProductDisplay is for UI display purposes (different from database Product)
+export type ProductDisplay = {
+  id: string;
+  name: string;
+  image: string;
+  price: number;
+  originalPrice?: number; // crossed-out price
+  currency?: string;
+  discountPercent?: number;
+  averageRating?: number;
+  numOfReviews?: number;
+};
+
+export type Job = {
+  id: string;
+  title: string;
+  company: string;
+  location: string;
+  salary: string;
+  type: string;
+  experience: string;
+  description: string;
+  requirements: string[];
+};
+
+export interface AuthContextType {
+  user: User | null;
+  setUser: Dispatch<SetStateAction<User | null>>;
+  logout: () => Promise<void>;
+  loading: boolean;
+  setLoading: Dispatch<SetStateAction<boolean>>;
+}
+
+export interface AuthProviderProps {
+  children: ReactNode;
+}
+
+export interface CartItem {
+  productId: string;
+  quantity: number;
+  price: number;
+  name: string;
+  image?: string | StaticImageData;
+  weight?: string;
+}
+
+export interface CartState {
+  cart: CartItem[];
+  total: number;
+  loading: boolean;
+}
+
+export type CartAction =
+  | { type: "FETCH_START" }
+  | { type: "FETCH_SUCCESS"; payload: { cartItems: CartItem[]; total: number } }
+  | { type: "CLEAR_CART" };
+
+export interface CartContextType {
+  cart: CartItem[];
+  total: number;
+  loading: boolean;
+  fetchCart: (withLoading?: boolean) => Promise<void>;
+  addToCart: (productId: string) => Promise<void>;
+  updateCartItems: (
+    productId: string,
+    action: "increase" | "decrease",
+  ) => Promise<void>;
+  deleteCartItem: (productId: string) => Promise<void>;
+  clearCart: () => Promise<void>;
+}
+
+export interface CartProviderProps {
+  children: ReactNode;
+}
+
+export type Theme = "dark" | "light" | "system";
+
+export interface ThemeProviderContextType {
+  theme: Theme;
+  setTheme: (theme: Theme) => void;
+}
+
+export interface ThemeProviderProps {
+  children: ReactNode;
+  defaultTheme?: Theme;
+  storageKey?: string;
 }
 

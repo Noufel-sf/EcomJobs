@@ -2,7 +2,7 @@
 
 import { useState, memo, useCallback } from "react";
 import Link from "next/link";
-import { useRouter, useParams } from "next/navigation";
+import { useParams } from "next/navigation";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -18,11 +18,11 @@ import {
 } from "lucide-react";
 import SingleProductSkeleton from "@/components/SingleProductSkeleton";
 import { useAddToCartMutation } from "@/Redux/Services/CartApi";
-import { useAppSelector } from "@/Redux/hooks";
+import { useGetProductByIdQuery } from "@/Redux/Services/ProductsApi";
 import { productThumbnails, shopOwnerInfo } from "@/lib/data";
 import { Swiper, SwiperSlide } from "swiper/react";
 import Image from "next/image";
-import { Navigation, Thumbs, Zoom } from "swiper/modules";
+import { Autoplay, Navigation, Thumbs, Zoom } from "swiper/modules";
 import "swiper/css";
 import toast from "react-hot-toast";
 
@@ -34,52 +34,26 @@ import "swiper/css/zoom";
 type SwiperInstance = any;
 
 const SingleProduct = () => {
-  // const { id } = useParams();
-  const [loading, setLoading] = useState(false);
+  const { id } = useParams();
   const [selectedSize, setSelectedSize] = useState<string>("");
   const [selectedColor, setSelectedColor] = useState<string>("");
   const [thumbsSwiper, setThumbsSwiper] = useState<SwiperInstance>(null);
   const [addToCart] = useAddToCartMutation();
-  const user = useAppSelector((state) => state.auth.user);
-  let router = useRouter();
 
-  // Mock product data
-  const singleProduct = {
-    id: "prod-001",
-    name: "Premium Wireless Headphones",
-    description:
-      "Experience superior sound quality with these premium wireless headphones. Featuring active noise cancellation, 30-hour battery life, and comfortable over-ear design. Perfect for music lovers, travelers, and professionals who demand the best audio experience.",
-    price: 199.99,
-    originalPrice: 299.99,
-    currency: "USD",
-    discountPercent: 33,
-    averageRating: 4.5,
-    numOfReviews: 128,
-    stock: 45,
-    sizes: ["45", "46", "47", "48", "49", "50"],
-    category: "Electronics",
-    brand: "AudioPro",
-    color: "Midnight Black",
-    features: [
-      "Active Noise Cancellation",
-      "30-Hour Battery Life",
-      "Bluetooth 5.0",
-      "Premium Sound Quality",
-      "Comfortable Over-Ear Design",
-    ],
-    weight: "250g",
-    colors: [
-      { name: "Midnight Black", hex: "#1a1a1a" },
-      { name: "Pearl White", hex: "#f5f5f5" },
-      { name: "Ocean Blue", hex: "#1e40af" },
-      { name: "Rose Gold", hex: "#b76e79" },
-      { name: "Forest Green", hex: "#166534" },
-    ],
-  };
+  const { data: singleProduct, isLoading, isError } = useGetProductByIdQuery(id as string, {
+    skip: !id,
+  });
 
   const handleAddToCart = useCallback(() => {
-  
-    addToCart(singleProduct?.id)
+    if (!singleProduct) return;
+    
+    addToCart({
+      productId: singleProduct.id,
+      name: singleProduct.name,
+      price: singleProduct.price,
+      image: singleProduct.main_img || productThumbnails[0],
+      quantity: 1,
+    })
       .unwrap()
       .then(() => {
         toast.success("Added to cart");
@@ -87,37 +61,37 @@ const SingleProduct = () => {
       .catch((error: any) => {
         toast.error(error?.data?.message || "Failed to add to cart");
       });
-  }, [user, addToCart]);
+  }, [singleProduct, addToCart]);
 
-  // if (isError) {
-  //   return (
-  //     <main
-  //       className="container mx-auto text-center py-16"
-  //       role="alert"
-  //       aria-live="polite"
-  //     >
-  //       <h1 className="text-4xl font-bold text-red-500 mb-4">
-  //         404 - Product Not Found
-  //       </h1>
-  //       <p className="text-muted-foreground mb-6">
-  //         Sorry, the product you are looking for does not exist.
-  //       </p>
-  //       <Button
-  //         asChild
-  //         variant="default"
-  //         size="default"
-  //         className=""
-  //         type="button"
-  //       >
-  //         <Link href="/">Back to Home</Link>
-  //       </Button>
-  //     </main>
-  //   );
-  // }
+  if (isError) {
+    return (
+      <main
+        className="container mx-auto text-center py-16"
+        role="alert"
+        aria-live="polite"
+      >
+        <h1 className="text-4xl font-bold text-red-500 mb-4">
+          404 - Product Not Found
+        </h1>
+        <p className="text-muted-foreground mb-6">
+          Sorry, the product you are looking for does not exist.
+        </p>
+        <Button
+          asChild
+          variant="default"
+          size="default"
+          className=""
+          type="button"
+        >
+          <Link href="/">Back to Home</Link>
+        </Button>
+      </main>
+    );
+  }
 
-  // if (isLoading) {
-  //   return <SingleProductSkeleton />;
-  // }
+  if (isLoading) {
+    return <SingleProductSkeleton />;
+  }
 
   return (
     <main className="mx-auto container px-4 lg:px-8 py-8">
@@ -169,7 +143,12 @@ const SingleProduct = () => {
                 swiper:
                   thumbsSwiper && !thumbsSwiper.destroyed ? thumbsSwiper : null,
               }}
-              modules={[Navigation, Thumbs, Zoom]}
+              autoplay={{
+                delay: 3000,
+                disableOnInteraction: false,
+                pauseOnMouseEnter: true,
+              }}
+              modules={[Navigation, Autoplay, Thumbs]}
               className="w-full aspect-square rounded-lg border border-border bg-background"
               a11y={{
                 enabled: true,
@@ -195,14 +174,14 @@ const SingleProduct = () => {
 
             {/* Custom Navigation Arrows */}
             <button
-              className="swiper-button-prev-custom absolute left-2 top-1/2 -translate-y-1/2 z-10 w-10 h-10 bg-white dark:bg-gray-800 rounded-full shadow-lg flex items-center justify-center group-hover:opacity-100 transition-opacity hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-purple-500"
+              className="swiper-button-prev-custom cursor-pointer absolute left-2 top-1/2 -translate-y-1/2 z-10 w-10 h-10 bg-white dark:bg-gray-800 rounded-full shadow-lg flex items-center justify-center group-hover:opacity-100 transition-opacity hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-purple-500"
               aria-label="Previous image"
               type="button"
             >
               <ChevronLeft className="w-5 h-5" aria-hidden="true" />
             </button>
             <button
-              className="swiper-button-next-custom absolute right-2 top-1/2 -translate-y-1/2 z-10 w-10 h-10 bg-white dark:bg-gray-800 rounded-full shadow-lg flex items-center justify-center group-hover:opacity-100 transition-opacity hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-purple-500"
+              className="swiper-button-next-custom absolute cursor-pointer right-2 top-1/2 -translate-y-1/2 z-10 w-10 h-10 bg-white dark:bg-gray-800 rounded-full shadow-lg flex items-center justify-center group-hover:opacity-100 transition-opacity hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-purple-500"
               aria-label="Next image"
               type="button"
             >

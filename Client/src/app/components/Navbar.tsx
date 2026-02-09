@@ -1,6 +1,6 @@
 'use client';
 
-import { memo, useEffect, useState } from "react";
+import { memo , useState } from "react";
 import { Moon, Sun, Search, ShoppingCart, User, Menu } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
@@ -20,13 +20,13 @@ import {
   NavigationMenuList,
   NavigationMenuTrigger,
 } from "@/components/ui/navigation-menu";
-import Api from "@/lib/Api";
 import { useGetCartQuery } from "@/Redux/Services/CartApi";
-import { useGetCategoriesQuery } from "@/Redux/Services/ProductsApi";
+import { useGetCategoriesQuery, useLazySearchProductsQuery } from "@/Redux/Services/ProductsApi";
 import { useLogoutMutation } from "@/Redux/Services/AuthApi";
 import { useAppSelector, useAppDispatch } from "@/Redux/hooks";
 import { logout as logoutAction } from "@/Redux/Slices/AuthSlice";
 import toast from "react-hot-toast";
+import { Categorie } from "@/lib/DatabaseTypes";
 
 interface ListItemProps {
   title: string;
@@ -52,6 +52,7 @@ function ListItem({ title, children, href }: ListItemProps) {
 }
 
 const Navbar = memo(function Navbar() {
+
   const [isOpen, setIsOpen] = useState(false);
   const { setTheme } = useTheme();
 
@@ -61,12 +62,13 @@ const Navbar = memo(function Navbar() {
   const dispatch = useAppDispatch();
   const user = useAppSelector((state) => state.auth.user);
   const [logoutMutation] = useLogoutMutation();
-  const { data: cartData } = useGetCartQuery(undefined);
+  const { data: cartData } = useGetCartQuery();
+  const [triggerSearch, { data: searchData }] = useLazySearchProductsQuery();
   const [searchTerm, setSearchTerm] = useState("");
-  const [searchResults, setSearchResults] = useState<any[]>([]);
   const [searchOpen, setSearchOpen] = useState(false);
   
-  const totalItems = cartData?.cartItems?.reduce((sum: number, item: any) => sum + item.quantity, 0) || 0;
+  const searchResults = searchData?.products || [];
+  const totalItems = cartData?.totalItems || 0;
   
   
   const handleLogout = async () => {
@@ -74,7 +76,7 @@ const Navbar = memo(function Navbar() {
       await logoutMutation().unwrap();
       dispatch(logoutAction());
       toast.success("Logged out successfully");
-    } catch (error) {
+    } catch {
       toast.error("Logout failed");
     }
   };
@@ -83,19 +85,16 @@ const Navbar = memo(function Navbar() {
   const handleSearch = async (value: string) => {
     setSearchTerm(value);
     if (value.trim() === "") {
-      setSearchResults([]);
       setSearchOpen(false);
       return;
     }
 
     try {
-      const { data } = await Api.get(`/product/search?name=${value}`);
-      setSearchResults(data.products || []);
+      await triggerSearch({ query: value });
       setSearchOpen(true);
-    } catch (error: any) {
-      setSearchResults([]);
+    } catch {
       setSearchOpen(true);
-      toast.error(error?.response?.data?.message || "Search failed");
+      toast.error("Search failed");
     }
   };
 
@@ -195,7 +194,7 @@ const Navbar = memo(function Navbar() {
                     </NavigationMenuTrigger>
                     <NavigationMenuContent className="">
                       <ul className="grid md:w-[400px] md:grid-cols-2 gap-3 p-4">
-                        {categories.map((category) => (
+                        {categories.map((category:Categorie) => (
                           <ListItem
                             key={category.title}
                             title={category.title}

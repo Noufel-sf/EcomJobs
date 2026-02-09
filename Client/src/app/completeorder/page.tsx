@@ -1,6 +1,12 @@
-'use client';
+"use client";
 
-import { useState, useCallback, useMemo, memo } from "react";
+import {
+  useCallback,
+  useMemo,
+  memo,
+  useTransition,
+  useOptimistic,
+} from "react";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -26,8 +32,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useGetCartQuery } from "@/Redux/Services/CartApi";
-import axiosInstance from "@/lib/Api";
+import {
+  useGetCartQuery,
+  useClearCartMutation,
+} from "@/Redux/Services/CartApi";
+import { useCreateOrderMutation } from "@/Redux/Services/OrderApi";
 import toast from "react-hot-toast";
 import CompleteOrderSkeleton from "@/components/CompleteOrderSkeleton";
 import Image from "next/image";
@@ -39,22 +48,26 @@ import {
   Package,
   ArrowLeft,
   ShoppingBag,
+  Loader2,
 } from "lucide-react";
 import { checkoutSchema, type CheckoutFormValues } from "@/lib/zodValidation";
 import { wilayas, shippingOptions } from "@/lib/data";
 
 function CompleteOrder() {
   const { data: cartData, isLoading } = useGetCartQuery(undefined);
-  const cart = cartData?.cartItems || [];
-  const total = cartData?.total || 0;
+  const [createOrder] = useCreateOrderMutation();
+  const [clearCart] = useClearCartMutation();
+  const cart = useMemo(() => cartData?.items || [], [cartData?.items]);
+  const total = cartData?.totalPrice || 0;
   const router = useRouter();
-  const [submitting, setSubmitting] = useState(false);
+  const [isPending, startTransition] = useTransition();
 
+  // Optimistic state for order submission
+  const [optimisticStatus, setOptimisticStatus] = useOptimistic<
+    "idle" | "submitting" | "success"
+  >("idle");
 
-
-  const displayCart = cart.length > 0 ? cart : [];
-  const mockTotal = 0;
-  const displayTotal = total > 0 ? total : mockTotal;
+  const displayTotal = total;
 
   // Enhanced shipping options with icons
   const shippingOptionsWithIcons = useMemo(
@@ -95,23 +108,28 @@ function CompleteOrder() {
 
   const SubmitOrder = useCallback(
     async (data: CheckoutFormValues) => {
-      try {
-        setSubmitting(true);
-        const response = await axiosInstance.post("/order", {
-          ...data,
-          items: displayCart,
-          total: grandTotal,
-        });
-        toast.success("Order placed successfully!");
-        router.push(`/order-confirmation/${response.data.orderId}`);
-      } catch (error: any) {
-        toast.error(error?.response?.data?.message || "Order failed");
-      } finally {
-        setSubmitting(false);
-      }
+      startTransition(async () => {
+        setOptimisticStatus("submitting");
+        try {
+          await createOrder({
+            ...data,
+            items: cart,
+            total: grandTotal,
+          }).unwrap();
+          await clearCart().unwrap();
+          setOptimisticStatus("success");
+          toast.success("Order placed successfully!");
+          router.push(`/thankyou`);
+        } catch (error: unknown) {
+          const err = error as { data?: { message?: string } };
+          toast.error(err?.data?.message || "Order failed");
+        }
+      });
     },
-    [displayCart, grandTotal, router],
+    [cart, grandTotal, router, createOrder, clearCart, setOptimisticStatus],
   );
+
+  const isSubmitting = isPending || optimisticStatus === "submitting";
 
   if (isLoading) {
     return <CompleteOrderSkeleton />;
@@ -194,7 +212,7 @@ function CompleteOrder() {
                       <FormField
                         control={form.control}
                         name="firstName"
-                        render={({ field } ) => (
+                        render={({ field }) => (
                           <FormItem>
                             <FormLabel>First Name *</FormLabel>
                             <FormControl>
@@ -220,7 +238,6 @@ function CompleteOrder() {
                       />
                     </div>
 
-                
                     <FormField
                       control={form.control}
                       name="phone"
@@ -250,23 +267,6 @@ function CompleteOrder() {
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-4">
-                    <FormField
-                      control={form.control}
-                      name="address"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Street Address *</FormLabel>
-                          <FormControl>
-                            <Input
-                              placeholder="123 Main Street, Apt 4B"
-                              {...field}
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
                     <div className="grid sm:grid-cols-2 gap-4">
                       <FormField
                         control={form.control}
@@ -300,11 +300,11 @@ function CompleteOrder() {
                               <SelectContent className="">
                                 {wilayas.map((wilaya) => (
                                   <SelectItem
-                                    key={wilaya}
-                                    value={wilaya}
+                                    key={wilaya.code}
+                                    value={String(wilaya.code)}
                                     className=""
                                   >
-                                    {wilaya}
+                                    {wilaya.code} - {wilaya.name}
                                   </SelectItem>
                                 ))}
                               </SelectContent>
@@ -406,16 +406,16 @@ function CompleteOrder() {
                 {/* Submit Button */}
                 <Button
                   type="submit"
-                  disabled={submitting || displayCart.length === 0}
+                  disabled={isSubmitting || cart.length === 0}
                   className="w-full"
                   size="lg"
                   variant="default"
-                  aria-label={submitting ? "Processing order" : "Place order"}
+                  aria-label={isSubmitting ? "Processing order" : "Place order"}
                 >
-                  {submitting ? (
+                  {isSubmitting ? (
                     <>
-                      <div
-                        className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"
+                      <Loader2
+                        className="animate-spin h-4 w-4 mr-2"
                         aria-hidden="true"
                       />
                       Processing Order...
@@ -449,12 +449,12 @@ function CompleteOrder() {
                   role="list"
                   aria-label="Cart items"
                 >
-                  {displayCart.map((item) => (
+                  {cart.map((item) => (
                     <div key={item.productId} className="flex gap-3">
-                      <div className="relative  w-16 h-16 bg-muted rounded flex-shrink-0">
+                      <div className="relative w-16 h-16 bg-muted rounded shrink-0">
                         <Image
-                          src={item.product.image}
-                          alt={item.product.name}
+                          src={item.image}
+                          alt={item.name}
                           className="w-full h-full object-contain p-1"
                           loading="lazy"
                           width={64}
@@ -462,7 +462,7 @@ function CompleteOrder() {
                         />
                         <Badge
                           variant="default"
-                          className="absolute -top-0 right-1 h-5 w-5 rounded-full p-0 flex items-center justify-center text-xs"
+                          className="absolute top-0 right-1 h-5 w-5 rounded-full p-0 flex items-center justify-center text-xs"
                           aria-label={`Quantity: ${item.quantity}`}
                         >
                           {item.quantity}
@@ -470,10 +470,10 @@ function CompleteOrder() {
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium line-clamp-2">
-                          {item.product.name}
+                          {item.name}
                         </p>
                         <p className="text-sm text-muted-foreground">
-                          ${item.product.price.toFixed(2)}
+                          ${item.price.toFixed(2)}
                         </p>
                       </div>
                     </div>
@@ -486,7 +486,7 @@ function CompleteOrder() {
                 <dl className="space-y-2 text-sm">
                   <div className="flex justify-between">
                     <dt className="text-muted-foreground">
-                      Subtotal ({displayCart.length} items)
+                      Subtotal ({cart.length} items)
                     </dt>
                     <dd className="font-medium">${displayTotal.toFixed(2)}</dd>
                   </div>

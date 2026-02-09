@@ -1,7 +1,7 @@
 'use client';
 
 import { Button } from "@/components/ui/button";
-import type { CartItem as CartItemType } from "@/lib/Types";
+import type { CartItem as CartItemType } from "@/lib/DatabaseTypes";
 import Image from "next/image";
 import { Minus, Plus ,Trash } from "lucide-react";
 import { memo } from "react";
@@ -42,7 +42,7 @@ const CartItem = memo(function CartItem({ item, handleQuantityUpdate, handleDele
           <button
             onClick={() => handleDeleteCartItem(item.productId)}
             type="button"
-            className="flex items-center gap-1 text-red-500 text-xs hover:text-red-600 transition"
+            className="flex items-center gap-1 cursor-pointer text-red-500 text-xs hover:text-red-600 transition"
             aria-label="Remove item"
           >
             <Trash className="w-3 h-3" />

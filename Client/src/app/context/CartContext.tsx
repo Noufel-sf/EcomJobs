@@ -2,7 +2,7 @@
 
 import React, { createContext, useContext, useEffect, useReducer } from 'react';
 import Api from '@/lib/Api';
-import type { CartAction, CartContextType, CartProviderProps, CartState } from '@/lib/Types';
+import type { CartAction, CartContextType, CartProviderProps, CartState } from '@/lib/DatabaseTypes';
 import toast from 'react-hot-toast';
 
 const CartContext = createContext<CartContextType | undefined>(undefined);

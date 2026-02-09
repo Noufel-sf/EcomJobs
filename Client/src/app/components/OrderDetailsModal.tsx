@@ -42,10 +42,6 @@ export default function OrderDetailsModal({
               <p className="font-medium">{selectedOrder?.user?.name}</p>
             </div>
             <div>
-              <p className="text-muted-foreground">Email</p>
-              <p className="font-medium">{selectedOrder?.user?.email}</p>
-            </div>
-            <div>
               <p className="text-muted-foreground">Phone</p>
               <p className="font-medium">{selectedOrder?.user?.phone}</p>
             </div>
@@ -53,17 +49,15 @@ export default function OrderDetailsModal({
           <div className="pt-2">
             <p className="text-muted-foreground text-sm">Status</p>
             <span className={`inline-block text-xs px-3 py-1 rounded-full mt-1 ${
-              selectedOrder?.status === 'delivered' 
+              selectedOrder?.status === 'COMPLETED' 
                 ? 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300'
-                : selectedOrder?.status === 'shipped'
-                ? 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300'
-                : selectedOrder?.status === 'processing'
+                : selectedOrder?.status === 'PENDING'
                 ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-300'
-                : selectedOrder?.status === 'cancelled'
+                : selectedOrder?.status === 'CANCELED'
                 ? 'bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300'
                 : 'bg-gray-100 text-gray-700 dark:bg-gray-900 dark:text-gray-300'
             }`}>
-              {selectedOrder?.status?.toUpperCase()}
+              {selectedOrder?.status}
             </span>
           </div>
         </div>
@@ -87,12 +81,12 @@ export default function OrderDetailsModal({
                     <div className="flex-1">
                       <p className="font-medium">{item.product.name}</p>
                       <p className="text-sm text-muted-foreground">
-                        ${item.product.price.toFixed(2)} x {item.quantity}
+                        ${(item.priceAtTime ?? item.product.price).toFixed(2)} x {item.quantity}
                       </p>
                     </div>
                     <div className="text-right">
                       <p className="font-semibold">
-                        ${(item.product.price * item.quantity).toFixed(2)}
+                        ${((item.priceAtTime ?? item.product.price) * item.quantity).toFixed(2)}
                       </p>
                     </div>
                   </>

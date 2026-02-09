@@ -108,7 +108,7 @@ export const createProductColumns = ({
     accessorKey: "price",
     header: "Price",
     cell: ({ row }) => (
-      <div className="text-sm text-muted-foreground">
+      <div className="text-sm text-primary font-semibold">
         {row.getValue("price")}
       </div>
     ),

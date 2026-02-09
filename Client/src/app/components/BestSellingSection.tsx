@@ -31,12 +31,19 @@ const BestSellingSection = memo(function BestSellingSection() {
 
   const [addToCartMutation] = useAddToCartMutation();
 
-  const addToCart = async (id: string) => {
+  const addToCart = async (product: { id: string; name: string; image: string; price: number }) => {
     try {
-      await addToCartMutation(id).unwrap();
+      await addToCartMutation({
+        productId: product.id,
+        name: product.name,
+        price: product.price,
+        image: product.image,
+        quantity: 1,
+      }).unwrap();
       toast.success("Added to cart");
-    } catch (error: any) {
-      toast.error(error?.data?.message || "Failed to add to cart");
+    } catch (error: unknown) {
+      const err = error as { data?: { message?: string } };
+      toast.error(err?.data?.message || "Failed to add to cart");
     }
   };
 
@@ -100,7 +107,7 @@ const BestSellingSection = memo(function BestSellingSection() {
                     <SkeletonCard />
                   </SwiperSlide>
                 ))
-              : products.map((product: any) => (
+              : products.map((product: { id: string; name: string; main_img?: string; image?: string; price: number }) => (
                   <SwiperSlide key={product.id}>
                     <ProductCard
                       product={product}

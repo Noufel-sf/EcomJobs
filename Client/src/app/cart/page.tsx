@@ -1,16 +1,21 @@
-'use client';
+"use client";
+
+
 
 import { memo, useCallback } from "react";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { SkeletonItem, SkeletonSummary } from "@/components/CartItemsSkeleton";
-import { useGetCartQuery, useUpdateCartItemMutation, useDeleteCartItemMutation, useClearCartMutation } from "@/Redux/Services/CartApi";
+import {
+  useGetCartQuery,
+  useUpdateCartItemMutation,
+  useDeleteCartItemMutation,
+  useClearCartMutation,
+} from "@/Redux/Services/CartApi";
 import toast from "react-hot-toast";
 import CartItem from "@/components/CartItem";
-import Api from "@/lib/Api";
 
 import {
   ShoppingBag,
@@ -27,15 +32,17 @@ function CartPage() {
   const [deleteCartItemMutation] = useDeleteCartItemMutation();
   const [clearCartMutation] = useClearCartMutation();
 
-  const cart = cartData?.cartItems || [];
-  console.log("the cart is " , cart);
+  const cart = cartData?.items || [];
+  console.log("cart" , cart);
   
-  const total = cartData?.total || 0;
+  const total = cartData?.totalPrice || 0;
 
-  const Total = cart.reduce((sum : number, item) => sum + (item.price * item.quantity), 0);
+  const Total = cart.reduce(
+    (sum: number, item) => sum + item.price * item.quantity,
+    0,
+  );
   const displayTotal = total > 0 ? total : Total;
 
-  const router = useRouter();
 
   const handleQuantityUpdate = useCallback(
     async (productId: string, newVal: number, currentVal: number) => {
@@ -44,7 +51,7 @@ function CartPage() {
           await deleteCartItemMutation(productId).unwrap();
           toast.success("Item removed from cart");
         } else {
-          const action = newVal > currentVal ? "increase" : "decrease";
+          const action = newVal > currentVal ? "increment" : "decrement";
           await updateCartItem({ productId, action }).unwrap();
         }
       } catch (error: any) {
@@ -75,20 +82,9 @@ function CartPage() {
     }
   }, [clearCartMutation]);
 
-  const checkOut = useCallback(async () => {
-    try {
-      const { data } = await Api.post("/order");
-      window.location.href = data.url;
-    } catch (error) {
-      const err = error as { response?: { data?: { message?: string } } };
-      toast.error(err?.response?.data?.message || "Checkout failed");
-    }
-  }, []);  const savings = 0; // Can be used for future promo code feature
+ 
+  const savings = 0; // Can be used for future promo code feature
   const finalTotal = displayTotal - savings;
-
-
-
-
 
   return (
     <main className="min-h-screen bg-muted/30">
@@ -118,7 +114,9 @@ function CartPage() {
             Shopping Cart
           </h1>
           <p className="text-muted-foreground" role="status" aria-live="polite">
-            {isLoading ? "Loading..." : `${cart.length} ${cart.length === 1 ? "item" : "items"} in your cart`}
+            {isLoading
+              ? "Loading..."
+              : `${cart.length} ${cart.length === 1 ? "item" : "items"} in your cart`}
           </p>
         </header>
 
@@ -141,7 +139,7 @@ function CartPage() {
                 {cart.map((item) => (
                   <CartItem
                     key={item.productId}
-                    item={item.product}
+                    item={item}
                     handleQuantityUpdate={handleQuantityUpdate}
                     handleDeleteCartItem={handleDeleteCartItem}
                   />
@@ -196,71 +194,67 @@ function CartPage() {
               <SkeletonSummary />
             ) : cart.length > 0 ? (
               <Card className="sticky top-4">
-                  <CardHeader className="">
-                    <CardTitle className="flex items-center gap-2">
-                      <CreditCard className="w-5 h-5" aria-hidden="true" />
-                      Order Summary
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    {/* Price breakdown */}
-                    <dl className="space-y-3 mt-3">
+                <CardHeader className="">
+                  <CardTitle className="flex items-center gap-2">
+                    <CreditCard className="w-5 h-5" aria-hidden="true" />
+                    Order Summary
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {/* Price breakdown */}
+                  <dl className="space-y-3 mt-3">
+                    <div className="flex justify-between text-sm">
+                      <dt className="text-muted-foreground">Subtotal</dt>
+                      <dd className="font-medium">${total.toFixed(2)}</dd>
+                    </div>
+
+                    {savings > 0 && (
                       <div className="flex justify-between text-sm">
-                        <dt className="text-muted-foreground">Subtotal</dt>
-                        <dd className="font-medium">${total.toFixed(2)}</dd>
-                      </div>
-
-                      {savings > 0 && (
-                        <div className="flex justify-between text-sm">
-                          <dt className="text-green-600">Discount</dt>
-                          <dd className="font-medium text-green-600">
-                            -${savings.toFixed(2)}
-                          </dd>
-                        </div>
-                      )}
-
-                      <div className="flex justify-between text-sm">
-                        <dt className="text-muted-foreground">Shipping</dt>
-                        <dd className="font-medium text-green-600">FREE</dd>
-                      </div>
-
-                      <div className="flex justify-between text-sm">
-                        <dt className="text-muted-foreground">Tax</dt>
-                        <dd className="font-medium">$0.00</dd>
-                      </div>
-
-                      <Separator className="" />
-
-                      <div className="flex justify-between text-lg">
-                        <dt className="font-bold">Total</dt>
-                        <dd className="font-bold text-primary">
-                          ${finalTotal.toFixed(2)}
+                        <dt className="text-green-600">Discount</dt>
+                        <dd className="font-medium text-green-600">
+                          -${savings.toFixed(2)}
                         </dd>
                       </div>
-                    </dl>
-                    <Link href="/completeorder" className="w-full">
-                      <Button
-                        size="lg"
-                        variant="primary"
-                        className="w-full mt-2 text-base font-semibold"
-                        onClick={checkOut}
-                        disabled={cart.length === 0}
-                        type="button"
-                        aria-label="Proceed to complete order"
-                      >
-                        Proceed to Complete Order
-                        <ArrowRight
-                          className="ml-2 w-4 h-4"
-                          aria-hidden="true"
-                        />
-                      </Button>
-                    </Link>
-                    <div className="flex mt-3 items-center justify-center gap-2 text-xs text-muted-foreground">
-                      <Lock className="w-3 h-3" aria-hidden="true" />
-                      <span>Secure checkout - Your data is protected</span>
+                    )}
+
+                    <div className="flex justify-between text-sm">
+                      <dt className="text-muted-foreground">Shipping</dt>
+                      <dd className="font-medium text-green-600">FREE</dd>
                     </div>
-                  </CardContent>
-                </Card>
+
+                    <div className="flex justify-between text-sm">
+                      <dt className="text-muted-foreground">Tax</dt>
+                      <dd className="font-medium">$0.00</dd>
+                    </div>
+
+                    <Separator className="" />
+
+                    <div className="flex justify-between text-lg">
+                      <dt className="font-bold">Total</dt>
+                      <dd className="font-bold text-primary">
+                        ${finalTotal.toFixed(2)}
+                      </dd>
+                    </div>
+                  </dl>
+                  <Link href="/completeorder" className="w-full">
+                    <Button
+                      size="lg"
+                      variant="primary"
+                      className="w-full mt-2 text-base font-semibold"
+                      disabled={cart.length === 0}
+                      type="button"
+                      aria-label="Proceed to complete order"
+                    >
+                      Proceed to Complete Order
+                      <ArrowRight className="ml-2 w-4 h-4" aria-hidden="true" />
+                    </Button>
+                  </Link>
+                  <div className="flex mt-3 items-center justify-center gap-2 text-xs text-muted-foreground">
+                    <Lock className="w-3 h-3" aria-hidden="true" />
+                    <span>Secure checkout - Your data is protected</span>
+                  </div>
+                </CardContent>
+              </Card>
             ) : null}
           </aside>
         </div>

@@ -39,15 +39,12 @@ export function getColumns({
 }: AdminOrderRowProps) {
   const getStatusStyle = (status: string) => {
     switch (status) {
-      case "delivered":
+      case "COMPLETED":
         return "bg-green-500/10 text-green-600 hover:bg-green-500/20 dark:bg-green-500/20 dark:text-green-400";
-      case "shipped":
-        return "bg-blue-500/10 text-blue-600 hover:bg-blue-500/20 dark:bg-blue-500/20 dark:text-blue-400";
-      case "processing":
+      case "PENDING":
         return "bg-yellow-500/10 text-yellow-600 hover:bg-yellow-500/20 dark:bg-yellow-500/20 dark:text-yellow-400";
-      case "cancelled":
+      case "CANCELED":
         return "bg-red-500/10 text-red-600 hover:bg-red-500/20 dark:bg-red-500/20 dark:text-red-400";
-      case "pending":
       default:
         return "bg-gray-500/10 text-gray-600 hover:bg-gray-500/20 dark:bg-gray-500/20 dark:text-gray-400";
     }
@@ -116,7 +113,7 @@ export function getColumns({
                 <span
                   className={`cursor-pointer text-xs px-2 py-1 rounded-full ${getStatusStyle(status)}`}
                 >
-                  {status.charAt(0).toUpperCase() + status.slice(1)}
+                  {status}
                 </span>
               </Button>
             </DropdownMenuTrigger>
@@ -126,46 +123,28 @@ export function getColumns({
               <DropdownMenuItem
                 className="cursor-pointer"
                 inset={false}
-                onClick={() => handleStatusChange(order.id, "pending")}
-              >
-                <span className="text-xs px-2 py-1 rounded-full bg-gray-500/10 text-gray-600 dark:bg-gray-500/20 dark:text-gray-400">
-                  Pending
-                </span>
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                className="cursor-pointer"
-                inset={false}
-                onClick={() => handleStatusChange(order.id, "processing")}
+                onClick={() => handleStatusChange(order.id, "PENDING")}
               >
                 <span className="text-xs px-2 py-1 rounded-full bg-yellow-500/10 text-yellow-600 dark:bg-yellow-500/20 dark:text-yellow-400">
-                  Processing
+                  PENDING
                 </span>
               </DropdownMenuItem>
               <DropdownMenuItem
                 className="cursor-pointer"
                 inset={false}
-                onClick={() => handleStatusChange(order.id, "shipped")}
-              >
-                <span className="text-xs px-2 py-1 rounded-full bg-blue-500/10 text-blue-600 dark:bg-blue-500/20 dark:text-blue-400">
-                  Shipped
-                </span>
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                className="cursor-pointer"
-                inset={false}
-                onClick={() => handleStatusChange(order.id, "delivered")}
+                onClick={() => handleStatusChange(order.id, "COMPLETED")}
               >
                 <span className="text-xs px-2 py-1 rounded-full bg-green-500/10 text-green-600 dark:bg-green-500/20 dark:text-green-400">
-                  Delivered
+                  COMPLETED
                 </span>
               </DropdownMenuItem>
               <DropdownMenuItem
                 className="cursor-pointer"
                 inset={false}
-                onClick={() => handleStatusChange(order.id, "cancelled")}
+                onClick={() => handleStatusChange(order.id, "CANCELED")}
               >
                 <span className="text-xs px-2 py-1 rounded-full bg-red-500/10 text-red-600 dark:bg-red-500/20 dark:text-red-400">
-                  Cancelled
+                  CANCELED
                 </span>
               </DropdownMenuItem>
             </DropdownMenuContent>

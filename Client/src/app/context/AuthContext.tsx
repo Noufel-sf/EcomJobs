@@ -1,7 +1,7 @@
 "use client";
 
 import Api from "@/lib/Api";
-import type { AuthContextType, AuthProviderProps, User } from "@/lib/Types";
+import type { AuthContextType, AuthProviderProps, User } from "@/lib/DatabaseTypes";
 import { createContext, useContext, useEffect, useState } from "react";
 import toast from "react-hot-toast";
 

@@ -3,7 +3,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, MapPin, DollarSign, Clock } from "lucide-react";
-import type { Job } from "@/lib/Types";
+import type { Job } from "@/lib/DatabaseTypes";
 
 interface JobCardProps {
   job: Job;
