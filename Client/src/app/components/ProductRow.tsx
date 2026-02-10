@@ -11,22 +11,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { MoreHorizontal } from "lucide-react";
-
-interface Product {
-  id: string;
-  name: string;
-  price: number;
-  description?: string;
-  categoryId?: string;
-  bestSelling?: boolean;
-  sizes?: string[];
-  active?: boolean;
-  image?: string;
-  images?: string[];
-  originalPrice?: number;
-  colors?: { name: string; hex: string }[];
-  category?: { title: string };
-}
+import { Product } from "@/lib/DatabaseTypes";
 
 interface CreateProductColumnsProps {
   handleStatusChange: (productId: string, status: string) => void;
@@ -39,6 +24,7 @@ export const createProductColumns = ({
   handleDelete,
   onEdit,
 }: CreateProductColumnsProps) => [
+ 
   {
     id: "select",
     header: ({ table }) => (
@@ -66,23 +52,21 @@ export const createProductColumns = ({
   {
     accessorKey: "id",
     header: "ID",
-    cell: ({ row }) => (
-      <div className="font-medium">{row.getValue("id")}</div>
-    ),
+    cell: ({ row }) => <div className="font-medium">{row.getValue("id")}</div>,
   },
-  { 
-    accessorKey: "image",
-    header: "Image",
-    cell: ({ row }) => (
-      <Image
-        width={48}
-        height={48}
-        className="w-12 h-12 object-cover rounded"
-        src={row.getValue("image")}
-        alt="Product Image"
-      />
-    ),
-  },
+  // {
+  //   accessorKey: "MainImage",
+  //   header: "MainImage",
+  //   cell: ({ row }) => (
+  //     <Image
+  //       width={48}
+  //       height={48}
+  //       className="w-12 h-12 object-cover rounded"
+  //       src={row.getValue("MainImage")}
+  //       alt="Product Image"
+  //     />
+  //   ),
+  // },
   {
     accessorKey: "name",
     header: "Name",
@@ -96,14 +80,7 @@ export const createProductColumns = ({
         .includes(filterValue.toLowerCase());
     },
   },
-  {
-    accessorKey: "category",
-    header: "Category",
-    cell: ({ row }) => {
-      const categoryTitle = row.original.category?.title || "Unknown";
-      return <div className="text-sm font-medium">{categoryTitle}</div>;
-    },
-  },
+
   {
     accessorKey: "price",
     header: "Price",
@@ -115,7 +92,7 @@ export const createProductColumns = ({
   },
 
   {
-    accessorKey: "Active",
+    accessorKey: "active",
     header: "Status",
     cell: ({ row }) => {
       const product = row.original;
@@ -161,18 +138,7 @@ export const createProductColumns = ({
       );
     },
   },
-  {
-    accessorKey: "bestSelling",
-    header: "Best Selling",
-    cell: ({ row }) => {
-      const isBestSelling = row.getValue("bestSelling");
-      return (
-        <div className="text-sm text-muted-foreground">
-          {isBestSelling ? "Yes" : "No"}
-        </div>
-      );
-    },
-  },
+ 
 
   {
     id: "actions",

@@ -1,6 +1,6 @@
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000/api/v1";
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "https://wadkniss-1.onrender.com/api/v1";
 
 interface Classification {
   id: string;
@@ -11,7 +11,7 @@ interface Classification {
 }
 
 interface GetAllClassificationsResponse {
-  classifications: Classification[];
+  content: Classification[];
 }
 
 interface CreateClassificationData {
@@ -28,19 +28,17 @@ interface UpdateClassificationData {
 export const classificationApi = createApi({
   reducerPath: "classificationApi",
   baseQuery: fetchBaseQuery({
-    baseUrl: `${API_URL}/classification`,
-    credentials: "include",
+
+    baseUrl: `${API_URL}/classifications`,
   }),
   tagTypes: ["Classifications"],
   endpoints: (builder) => ({
 
-    // 🔹 Get All Classifications
     getAllClassifications: builder.query<GetAllClassificationsResponse, void>({
-      query: () => "/",
+      query: () => "",
       providesTags: ["Classifications"],
     }),
 
-    // 🔹 Add Classification
     addClassification: builder.mutation<Classification, CreateClassificationData>({
       query: (data) => ({
         url: "/",
@@ -50,7 +48,6 @@ export const classificationApi = createApi({
       invalidatesTags: ["Classifications"],
     }),
 
-    // 🔹 Update Classification
     updateClassification: builder.mutation<Classification, UpdateClassificationData>({
       query: ({ id, ...data }) => ({
         url: `/${id}`,
@@ -60,7 +57,6 @@ export const classificationApi = createApi({
       invalidatesTags: ["Classifications"],
     }),
 
-    // 🔹 Delete Classification
     deleteClassification: builder.mutation<void, string>({
       query: (id) => ({
         url: `/${id}`,

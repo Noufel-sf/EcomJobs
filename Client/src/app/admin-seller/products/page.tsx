@@ -9,6 +9,7 @@ import {
   useReactTable,
   flexRender,
 } from "@tanstack/react-table";
+
 import {
   Table,
   TableBody,
@@ -17,12 +18,14 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+
 import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
   DropdownMenuContent,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { ChevronDown } from "lucide-react";
@@ -32,55 +35,50 @@ import AdminDataTableSkeleton from "@/components/AdminDataTableSkeleton";
 import { createProductColumns } from "@/components/ProductRow";
 import UpdateProductUi from "@/components/UpdateProductUi";
 import CreateProductUi from "@/components/CreateProductUi";
+
 import {
   useGetAllProductsQuery,
-  useGetCategoriesQuery,
   useCreateProductMutation,
   useUpdateProductMutation,
   useDeleteProductMutation,
   useUpdateProductStatusMutation,
 } from "@/Redux/Services/ProductsApi";
 
-interface Product {
-  id: string;
-  name: string;
-  price: number;
-  description?: string;
-  categoryId?: string;
-  bestSelling?: boolean;
-  sizes?: string[];
-  active?: boolean;
-  images?: string[];
-  originalPrice?: number;
-  colors?: { name: string; hex: string }[];
-}
+
+import { useGetAllClassificationsQuery } from "@/Redux/Services/ClassificationApi";
+import { Product } from "@/lib/DatabaseTypes";
 
 export default function AdminProducts() {
-  // RTK Query
-  const { data: productsData, isLoading } = useGetAllProductsQuery(undefined);
-  const { data: categories = [] } = useGetCategoriesQuery(undefined);
-  console.log("products" , productsData);
-  
-
+  const { data: categoriesData } = useGetAllClassificationsQuery(undefined);
+  const categories = categoriesData?.content || [];
 
   const [createProduct, { isLoading: isCreating }] = useCreateProductMutation();
   const [updateProduct, { isLoading: isUpdating }] = useUpdateProductMutation();
   const [deleteProduct] = useDeleteProductMutation();
   const [updateProductStatus] = useUpdateProductStatusMutation();
 
-  const products = productsData?.products || [];
+  const [data, setData] = useState<Product[]>([]);
+  const { data: productsData, isLoading } = useGetAllProductsQuery(undefined);
+  const products = productsData?.content || [];
+  console.log("products" , products);
+  
 
-  // UI state only
+
+ 
+
+  const [sorting, setSorting] = useState<any[]>([]);
+  const [columnFilters, setColumnFilters] = useState<any[]>([]);
+  const [columnVisibility, setColumnVisibility] = useState<any>({});
+  const [rowSelection, setRowSelection] = useState<any>({});
+
   const [openCreate, setOpenCreate] = useState(false);
   const [openEdit, setOpenEdit] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
 
-  // Handlers
   const handleCreate = async (formData: FormData) => {
     try {
-      await createProduct(formData).unwrap();
-      console.log("product Created ", formData);
-      
+      const newProduct = await createProduct(formData).unwrap();
+      setData((prev) => [...prev, newProduct]);
       toast.success("Product created successfully");
       setOpenCreate(false);
     } catch (error: any) {
@@ -90,8 +88,14 @@ export default function AdminProducts() {
 
   const handleUpdate = async (id: string, formData: FormData) => {
     try {
-      await updateProduct({ id, formData }).unwrap();
-      console.log("product Updated ", formData);
+      const updated = await updateProduct({ id, formData }).unwrap();
+
+      setData((prev) =>
+        prev.map((product) =>
+          product.id === id ? { ...product, ...updated } : product,
+        ),
+      );
+
       toast.success("Product updated successfully");
       setOpenEdit(false);
       setSelectedProduct(null);
@@ -103,6 +107,7 @@ export default function AdminProducts() {
   const handleDelete = async (productId: string) => {
     try {
       await deleteProduct(productId).unwrap();
+      setData((prev) => prev.filter((p) => p.id !== productId));
       toast.success("Product deleted successfully");
     } catch (error: any) {
       toast.error(error?.data?.message || "Failed to delete product");
@@ -110,13 +115,25 @@ export default function AdminProducts() {
   };
 
   const handleStatusChange = async (productId: string, newStatus: string) => {
+    const previousData = [...data];
+
+    setData((prev) =>
+      prev.map((product) =>
+        product.id === productId
+          ? { ...product, active: newStatus === "active" }
+          : product,
+      ),
+    );
+
     try {
       await updateProductStatus({
         id: productId,
         active: newStatus === "active",
       }).unwrap();
+
       toast.success("Status updated successfully");
     } catch (error: any) {
+      setData(previousData);
       toast.error(error?.data?.message || "Failed to update status");
     }
   };
@@ -137,6 +154,16 @@ export default function AdminProducts() {
     getPaginationRowModel: getPaginationRowModel(),
     getSortedRowModel: getSortedRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
+    onSortingChange: setSorting,
+    onColumnFiltersChange: setColumnFilters,
+    onColumnVisibilityChange: setColumnVisibility,
+    onRowSelectionChange: setRowSelection,
+    state: {
+      sorting,
+      columnFilters,
+      columnVisibility,
+      rowSelection,
+    },
   });
 
   return (
@@ -145,54 +172,55 @@ export default function AdminProducts() {
       <p className="text-gray-700 dark:text-gray-400 mb-4">
         View & Create and Organize All Products.
       </p>
+
       <div className="w-full">
-        <div className="flex items-center py-4 gap-4">
+        {/* Top Controls */}
+        <div className="flex items-center justify-between py-4">
           <Input
             type="text"
-            placeholder="Search products..."
-            value={(table.getColumn("name")?.getFilterValue() as string) ?? ""}
-            onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
+            placeholder="Search by name..."
+            value={table.getColumn("name")?.getFilterValue() ?? ""}
+            onChange={(event: any) =>
               table.getColumn("name")?.setFilterValue(event.target.value)
             }
             className="max-w-sm"
           />
 
-          <CreateProductUi
-            open={openCreate}
-            onOpenChange={setOpenCreate}
-            categories={categories}
-            onSubmit={handleCreate}
-            loading={isCreating}
-          />
+          <div className="flex items-center gap-3">
+            
+            <CreateProductUi
+              open={openCreate}
+              onOpenChange={setOpenCreate}
+              categories={categories}
+              onSubmit={handleCreate}
+              loading={isCreating}
+            />
 
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                variant="outline"
-                size="sm"
-                className="ml-auto cursor-pointer"
-              >
-                Columns <ChevronDown className="ml-2 h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="">
-              {table
-                .getAllColumns()
-                .filter((column) => column.getCanHide())
-                .map((column) => (
-                  <DropdownMenuCheckboxItem
-                    key={column.id}
-                    className="capitalize cursor-pointer"
-                    checked={column.getIsVisible()}
-                    onCheckedChange={(value: any) =>
-                      column.toggleVisibility(!!value)
-                    }
-                  >
-                    {column.id}
-                  </DropdownMenuCheckboxItem>
-                ))}
-            </DropdownMenuContent>
-          </DropdownMenu>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline">
+                  Columns <ChevronDown className="ml-2 h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className={""} align="end">
+                {table
+                  .getAllColumns()
+                  .filter((column) => column.getCanHide())
+                  .map((column) => (
+                    <DropdownMenuCheckboxItem
+                      key={column.id}
+                      className="capitalize"
+                      checked={column.getIsVisible()}
+                      onCheckedChange={(value: any) =>
+                        column.toggleVisibility(!!value)
+                      }
+                    >
+                      {column.id}
+                    </DropdownMenuCheckboxItem>
+                  ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
         </div>
 
         <UpdateProductUi
@@ -204,11 +232,12 @@ export default function AdminProducts() {
           loading={isUpdating}
         />
 
+        {/* Table */}
         <div className="rounded-md border">
           <Table className="">
             <TableHeader className="">
               {table.getHeaderGroups().map((headerGroup) => (
-                <TableRow key={headerGroup.id} className="">
+                <TableRow className="" key={headerGroup.id}>
                   {headerGroup.headers.map((header) => (
                     <TableHead key={header.id} className="">
                       {header.isPlaceholder
@@ -222,16 +251,13 @@ export default function AdminProducts() {
                 </TableRow>
               ))}
             </TableHeader>
+
             <TableBody className="">
               {isLoading ? (
                 <AdminDataTableSkeleton />
               ) : table.getRowModel().rows?.length ? (
                 table.getRowModel().rows.map((row) => (
-                  <TableRow
-                    key={row.id}
-                    data-state={row.getIsSelected() && "selected"}
-                    className=""
-                  >
+                  <TableRow className="" key={row.id}>
                     {row.getVisibleCells().map((cell) => (
                       <TableCell key={cell.id} className="">
                         {flexRender(
@@ -243,7 +269,7 @@ export default function AdminProducts() {
                   </TableRow>
                 ))
               ) : (
-                <TableRow className="">
+                <TableRow className={""}>
                   <TableCell
                     colSpan={columns.length}
                     className="h-24 text-center"
@@ -256,27 +282,29 @@ export default function AdminProducts() {
           </Table>
         </div>
 
+        {/* Pagination */}
         <div className="flex items-center justify-end space-x-2 py-4">
           <div className="text-muted-foreground flex-1 text-sm">
             {table.getFilteredSelectedRowModel().rows.length} of{" "}
             {table.getFilteredRowModel().rows.length} row(s) selected.
           </div>
+
           <div className="space-x-2">
             <Button
-              variant="outline"
-              size="sm"
+              variant="primary"
+              size="lg"
+              className={""}
               onClick={() => table.previousPage()}
               disabled={!table.getCanPreviousPage()}
-              className="cursor-pointer"
             >
               Previous
             </Button>
             <Button
-              variant="outline"
-              size="sm"
+              size="lg"
+              variant="primary"
+              className={""}
               onClick={() => table.nextPage()}
               disabled={!table.getCanNextPage()}
-              className="cursor-pointer"
             >
               Next
             </Button>

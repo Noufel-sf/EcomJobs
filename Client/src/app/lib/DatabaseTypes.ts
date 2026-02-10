@@ -12,7 +12,6 @@ export interface Categorie {
   id: string; // uuid
   name: string; // varchar(100)
   desc: string | null; // varchar(500)
-  img: string; // varchar(255)
 }
 
 
@@ -56,14 +55,13 @@ export interface Product {
   id: string; 
   name: string;
   price: number; 
-  main_img: string; 
-  small_desc: string; 
-  big_desc: string | null; 
+  mainImage: string; 
+  smallDesc: string; 
+  bigDesc: string | null; 
   available: boolean;
   sponsored: boolean;
   owner: string | null; // uuid → FK to seller.id
   classification: string | null; // uuid → FK to classification.id
-  // - weight: number (for shipping calculations)
 }
 
 export interface ProductList {

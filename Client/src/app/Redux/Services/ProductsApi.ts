@@ -10,7 +10,7 @@ export interface GetAllProductsParams {
 }
 
 export interface GetAllProductsResponse {
-  products: Product[];
+  content: Product[];
   totalProducts: number;
   page: number;
   limit: number;
@@ -20,8 +20,8 @@ export interface GetAllProductsResponse {
 export const productsApi = createApi({
   reducerPath: "productsApi",
   baseQuery: fetchBaseQuery({
-    baseUrl: process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000/api/v1",
-    credentials: "include",
+    baseUrl:  "https://wadkniss-1.onrender.com/api/v1/products",
+    // credentials: "include",
   }),
 
   tagTypes: ["Products", "Product", "Categories"],
@@ -31,7 +31,7 @@ export const productsApi = createApi({
     
     getAllProducts: builder.query<GetAllProductsResponse, GetAllProductsParams | void>({
       query: (params) => ({
-        url: "/product",
+        url: "",
         params: params ? {
           ...(params.page && { page: params.page }),
           ...(params.limit && { limit: params.limit }),
@@ -43,25 +43,25 @@ export const productsApi = createApi({
       providesTags: ["Products"],
     }),
 
-    getBestSelling: builder.query<{ products: Product[] }, void>({
-      query: () => "/product/bestSelling",
+    getBestSelling: builder.query<{ content: Product[] }, void>({
+      query: () => "/bestSelling",
       providesTags: ["Products"],
     }),
 
     getProductById: builder.query({
-      query: (id) => `/product/${id}`,
+      query: (id) => `/${id}`,
       providesTags: (result, error, id) => [{ type: "Product", id }],
     }),
 
     getSellerProducts: builder.query({
-      query: (sellerId) => `/product/seller/${sellerId}`,
+      query: (sellerId) => `/seller/${sellerId}`,
       providesTags: ["Products"],
     }),
 
 
     searchProducts: builder.query({
       query: ({ query, category, minPrice, maxPrice, page, limit }) => ({
-        url: "/product/search",
+        url: "/search",
         params: {
           q: query,
           ...(category && { category }),
@@ -82,7 +82,7 @@ export const productsApi = createApi({
 
     createProduct: builder.mutation({
       query: (formData) => ({
-        url: "/product",
+        url: "/",
         method: "POST",
         body: formData,
       }),
@@ -91,7 +91,7 @@ export const productsApi = createApi({
 
     updateProduct: builder.mutation({
       query: ({ id, formData }) => ({
-        url: `/product/${id}`,
+        url: `/${id}`,
         method: "PATCH",
         body: formData,
       }),
@@ -103,7 +103,7 @@ export const productsApi = createApi({
 
     deleteProduct: builder.mutation({
       query: (id) => ({
-        url: `/product/${id}`,
+        url: `/${id}`,
         method: "DELETE",
       }),
       invalidatesTags: ["Products"],
@@ -111,7 +111,7 @@ export const productsApi = createApi({
 
     updateProductStatus: builder.mutation({
       query: ({ id, active }) => ({
-        url: `/product/${id}`,
+        url: `/${id}`,
         method: "PATCH",
         body: { active },
       }),

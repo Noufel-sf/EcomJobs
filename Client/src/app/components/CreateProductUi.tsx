@@ -45,6 +45,7 @@ export default function CreateProductUi({
 }: CreateProductUiProps) {
   // Internal state management - matching database Product schema
   const [name, setName] = useState("");
+  const [ownerId, setOwnerId] = useState("019c4452-fa9c-7786-8914-d7292191dcd8"); // This will be set to the current seller's ID in the parent component  
   const [smallDesc, setSmallDesc] = useState("");
   const [bigDesc, setBigDesc] = useState("");
   const [price, setPrice] = useState("");
@@ -87,26 +88,24 @@ export default function CreateProductUi({
 
     const formData = new FormData();
     formData.append("name", name);
-    formData.append("small_desc", smallDesc);
-    formData.append("big_desc", bigDesc);
+    formData.append("smallDesc", smallDesc);
+    formData.append("bigDesc", bigDesc);
     formData.append("price", price);
-    formData.append("classification", classification);
-    formData.append("available", String(available));
-    formData.append("sponsored", String(sponsored));
+    formData.append("prod_class", classification);
     formData.append("sizes", JSON.stringify(sizes));
     formData.append("colors", JSON.stringify(colors));
+    formData.append("owner", ownerId);
 
     if (mainImage) {
-      formData.append("main_img", mainImage);
+      formData.append("mainImage", mainImage);
     }
 
     extraImages.forEach((image) => {
       if (image) {
-        formData.append("extra_images", image);
+        formData.append("extraImages", image);
       }
     });
 
-    // Debug: Log FormData contents properly
     console.log("product data:");
     for (const [key, value] of formData.entries()) {
       console.log(`  ${key}:`, value);
@@ -193,14 +192,14 @@ export default function CreateProductUi({
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
-        <Button variant="primary" size="sm">
+        <Button className="" variant="primary" size="sm">
           Create a new product
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[900px] max-h-[90vh] overflow-y-auto">
         <form onSubmit={handleCreateProduct}>
-          <DialogHeader>
-            <DialogTitle>Create Product</DialogTitle>
+          <DialogHeader className="">
+            <DialogTitle className="">Create Product</DialogTitle>
             <DialogDescription className="mb-3">
               Create a new product. Click save when you are done.
             </DialogDescription>
@@ -209,7 +208,7 @@ export default function CreateProductUi({
             {/* Left Column - Main Info */}
             <div className="md:col-span-2 space-y-4">
               <div className="grid gap-3">
-                <Label htmlFor="name">Name</Label>
+                <Label className="" htmlFor="name">Name</Label>
                 <Input
                   id="name"
                   value={name}
@@ -220,7 +219,7 @@ export default function CreateProductUi({
                 />
               </div>
               <div className="grid gap-3">
-                <Label htmlFor="smallDesc">Short Description</Label>
+                <Label className="" htmlFor="smallDesc">Short Description</Label>
                 <Input
                   id="smallDesc"
                   value={smallDesc}
@@ -232,7 +231,7 @@ export default function CreateProductUi({
                 />
               </div>
               <div className="grid gap-3">
-                <Label htmlFor="bigDesc">Full Description</Label>
+                <Label className="" htmlFor="bigDesc">Full Description</Label>
                 <textarea
                   id="bigDesc"
                   value={bigDesc}
@@ -245,8 +244,9 @@ export default function CreateProductUi({
                 />
               </div>
               <div className="grid gap-3">
-                <Label htmlFor="price">Price</Label>
+                <Label className="" htmlFor="price">Price</Label>
                 <Input
+                  className={""}
                   id="price"
                   type="number"
                   step="0.01"
@@ -262,6 +262,7 @@ export default function CreateProductUi({
               <div className="flex gap-6">
                 <div className="flex items-center gap-2">
                   <Checkbox
+                    className={""}
                     id="available"
                     checked={available}
                     onCheckedChange={(checked) =>
@@ -285,7 +286,7 @@ export default function CreateProductUi({
 
               {/* Main Image */}
               <div className="grid gap-3">
-                <Label htmlFor="mainImage">Main Product Image</Label>
+                <Label className="" htmlFor="mainImage">Main Product Image</Label>
                 <Input
                   id="mainImage"
                   type="file"
@@ -559,7 +560,7 @@ export default function CreateProductUi({
             {loading ? (
               <ButtonLoading />
             ) : (
-              <Button size="lg" className="" variant="outline" type="submit">
+              <Button size="lg" className="" variant="primary" type="submit">
                 Save changes
               </Button>
             )}

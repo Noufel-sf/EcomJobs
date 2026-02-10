@@ -37,7 +37,6 @@ import OrderDetailsModal from "@/components/OrderDetailsModal";
 import type { Order } from "@/lib/DatabaseTypes";
 
 
-import { mockOrders } from "@/lib/data";
 
 export default function AdminAllOrders() {
 
@@ -47,7 +46,7 @@ export default function AdminAllOrders() {
   const [updateOrderStatus] = useUpdateOrderStatusMutation();
 
 
-  const [data, setData] = useState<Order[]>(mockOrders);
+  const [data, setData] = useState<Order[]>(orders);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
 
@@ -295,8 +294,8 @@ export default function AdminAllOrders() {
           </div>
           <div className="space-x-2">
             <Button
-              variant="outline"
-              size="default"
+              variant="primary"
+              size="lg"
               onClick={() => table.previousPage()}
               disabled={!table.getCanPreviousPage()}
               className="cursor-pointer"
@@ -304,8 +303,8 @@ export default function AdminAllOrders() {
               Previous
             </Button>
             <Button
-              variant="outline"
-              size="default"
+              variant="primary"
+              size="lg"
               onClick={() => table.nextPage()}
               disabled={!table.getCanNextPage()}
               className="cursor-pointer"

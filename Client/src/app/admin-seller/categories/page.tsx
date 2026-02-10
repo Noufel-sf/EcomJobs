@@ -1,6 +1,7 @@
-'use client';
+"use client";
+import { useState, useEffect } from "react";
 
-import React from 'react';
+import React from "react";
 import {
   getCoreRowModel,
   getPaginationRowModel,
@@ -8,7 +9,7 @@ import {
   getFilteredRowModel,
   useReactTable,
   flexRender,
-} from '@tanstack/react-table';
+} from "@tanstack/react-table";
 
 import {
   Table,
@@ -17,7 +18,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@/components/ui/table';
+} from "@/components/ui/table";
 import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
@@ -26,8 +27,8 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import { Input } from '@/components/ui/input';
+} from "@/components/ui/dropdown-menu";
+import { Input } from "@/components/ui/input";
 import {
   Dialog,
   DialogClose,
@@ -37,16 +38,23 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from '@/components/ui/dialog';
-import { Label } from '@/components/ui/label';
-import { Button } from '@/components/ui/button';
-import { Checkbox } from '@/components/ui/checkbox';
-import { MoreHorizontal, ArrowUpDown, ChevronDown } from 'lucide-react';
-import AdminSidebarLayout from '@/components/AdminSidebarLayout';
-import { useAppSelector } from '@/Redux/hooks';
-import axiosInstance from '@/lib/Api';
-import toast from 'react-hot-toast';
-import { ButtonLoading } from '@/components/ui/ButtonLoading';
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import { MoreHorizontal, ChevronDown } from "lucide-react";
+import AdminSidebarLayout from "@/components/AdminSidebarLayout";
+import { useAppSelector } from "@/Redux/hooks";
+import toast from "react-hot-toast";
+import { ButtonLoading } from "@/components/ui/ButtonLoading";
+import {
+  useGetAllClassificationsQuery,
+  useAddClassificationMutation,
+  useDeleteClassificationMutation,
+  useUpdateClassificationMutation,
+} from "@/Redux/Services/ClassificationApi";
+import { Classification } from "@/lib/DatabaseTypes";
+
 import {
   Sheet,
   SheetClose,
@@ -55,108 +63,101 @@ import {
   SheetFooter,
   SheetHeader,
   SheetTitle,
-  SheetTrigger,
-} from '@/components/ui/sheet';
-import AdminDataTableSkeleton from '@/components/AdminDataTableSkeleton';
+} from "@/components/ui/sheet";
+import AdminDataTableSkeleton from "@/components/AdminDataTableSkeleton";
 
 export default function AdminCategories() {
-  const [data, setData] = React.useState([]);
-  const [loading, setLoading] = React.useState(false);
-  const [editMode, setEditMode] = React.useState(false);
-  const [editSheetOpen, setEditSheetOpen] = React.useState(false);
-  const [selectedCategory, setSelectedCategory] = React.useState(false);
-  const [title, setTitle] = React.useState('');
-  const [description, setDescription] = React.useState('');
-  const [href, setHref] = React.useState('');
-  const [open, setOpen] = React.useState(false);
+  const { data: categoriesData, isLoading } = useGetAllClassificationsQuery();
+  const categories = categoriesData?.content || [];
+  console.log("categories", categoriesData);
 
-  const fetchCategories = async () => {
-    setLoading(true);
+  useEffect(() => {
+    if (categoriesData?.content) {
+      setData(categoriesData.content);
+    }
+  }, [categoriesData]);
+
+
+
+  const [data, setData] = useState(categories);
+  const [editMode, setEditMode] = useState(false);
+  const [editSheetOpen, setEditSheetOpen] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState<Classification | null>(null);
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+  const [open, setOpen] = useState(false);
+
+  const [deleteCategory] = useDeleteClassificationMutation();
+  const [createCategory] = useAddClassificationMutation();
+  const [updateCategory] = useUpdateClassificationMutation();
+
+
+  const handleCreate = async () => {
+    const formData = new FormData();
+    formData.append("name", title);
+    formData.append("desc", description);
+    console.log("product data:");
+    for (const [key, value] of formData.entries()) {
+      console.log(`  ${key}:`, value);
+    }
+
     try {
-      const { data } = await axiosInstance.get('/category');
-      setData(data?.categories);
-    } catch (error) {
-      console.log(error);
-    } finally {
-      setLoading(false);
+      const newCategory = await createCategory(formData).unwrap();
+      setData((prev) => [...prev, newCategory]);
+      toast.success("Category created successfully");
+    } catch (error: any) {
+      toast.error(error?.data?.message || "Failed to create category");
     }
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setLoading(true);
+  const handleUpdate = async (id: string) => {
     try {
-      if (editMode && selectedCategory) {
-        const res = await axiosInstance.patch(
-          `/category/${selectedCategory.id}`,
-          {
-            title,
-            description,
-            href,
-          }
-        );
-        toast.success(res.data.message);
-      } else {
-        const res = await axiosInstance.post('/category', {
-          title,
-          description,
-          href,
-        });
-        toast.success(res.data.message);
-      }
+      const formData = new FormData();
+      formData.append("name", title);
+      formData.append("desc", description);
 
-      await fetchCategories();
-      setOpen(false);
-      setEditMode(false);
-      setEditSheetOpen(false);
+      const updated = await updateCategory({ id }).unwrap();
+
+      setData((prev) =>
+        prev.map((category) =>
+          category.id === id ? { ...category, ...updated } : category,
+        ),
+      );
+
+      toast.success("Category updated successfully");
       setSelectedCategory(null);
-      setTitle('');
-      setDescription('');
-      setHref('');
-    } catch (error) {
-      if (error?.response?.data?.message) {
-        toast.error(error.response.data.message);
-      } else {
-        console.error(error);
-        toast.error('Something went wrong');
-      }
-    } finally {
-      setLoading(false);
+      setEditSheetOpen(false);
+      setEditMode(false);
+    } catch (error: any) {
+      toast.error(error?.data?.message || "Failed to update category");
     }
   };
 
-  const handleDelete = async (categoryId) => {
-    setLoading(true);
+  const handleDelete = async (categoryId: string) => {
     try {
-      const res = await axiosInstance.delete(`/category/${categoryId}`);
-      toast.success(res.data.message);
-      await fetchCategories();
-    } catch (error) {
-      toast.error(error.response?.data?.message);
-    } finally {
-      setLoading(false);
+      await deleteCategory(categoryId).unwrap();
+      setData((prev) => prev.filter((c) => c.id !== categoryId));
+      toast.success("Category deleted successfully");
+    } catch (error: any) {
+      toast.error(error?.data?.message || "Failed to delete category");
     }
   };
-
-  React.useEffect(() => {
-    fetchCategories();
-  }, []);
 
   const user = useAppSelector((state) => state.auth.user);
-  const [sorting, setSorting] = React.useState([]);
-  const [columnFilters, setColumnFilters] = React.useState([]);
-  const [columnVisibility, setColumnVisibility] = React.useState({});
-  const [rowSelection, setRowSelection] = React.useState({});
+  const [sorting, setSorting] = useState([]);
+  const [columnFilters, setColumnFilters] = useState([]);
+  const [columnVisibility, setColumnVisibility] = useState({});
+  const [rowSelection, setRowSelection] = useState({});
 
   const columns = [
     {
-      id: 'select',
+      id: "select",
       header: ({ table }) => (
         <Checkbox
           className="cursor-pointer"
           checked={
             table.getIsAllPageRowsSelected() ||
-            (table.getIsSomePageRowsSelected() && 'indeterminate')
+            (table.getIsSomePageRowsSelected() && "indeterminate")
           }
           onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
           aria-label="Select all"
@@ -174,67 +175,63 @@ export default function AdminCategories() {
       enableHiding: false,
     },
     {
-      accessorKey: 'id',
-      header: 'ID',
+      accessorKey: "id",
+      header: "ID",
       cell: ({ row }) => (
-        <div className="font-medium">{row.getValue('id')}</div>
+        <div className="font-medium">{row.getValue("id")}</div>
       ),
     },
     {
-      accessorKey: 'title',
-      header: 'Title',
+      accessorKey: "name",
+      header: "Name",
       cell: ({ row }) => (
-        <div className="font-medium">{row.getValue('title')}</div>
+        <div className="font-medium">{row.getValue("name")}</div>
       ),
     },
     {
-      accessorKey: 'description',
-      header: 'Description',
+      accessorKey: "description",
+      header: "Description",
       cell: ({ row }) => (
         <div className="text-sm text-muted-foreground">
-          {row.getValue('description')}
+          {row.getValue("description")}
         </div>
       ),
     },
+
     {
-      accessorKey: 'href',
-      header: 'Link',
-      cell: ({ row }) => (
-        <a href={row.getValue('href')} className="text-blue-500 underline cursor-pointer">
-          {row.getValue('href')}
-        </a>
-      ),
-    },
-    {
-      id: 'actions',
+      id: "actions",
       enableHiding: false,
       cell: ({ row }) => {
         const category = row.original;
         return (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" className="h-8 w-8 p-0 cursor-pointer">
+              <Button variant="ghost" size="lg" className="h-8 w-8 p-0 cursor-pointer">
                 <span className="sr-only">Open menu</span>
                 <MoreHorizontal className="h-4 w-4" />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
+            <DropdownMenuContent className={""} align="end">
               <DropdownMenuLabel>Actions</DropdownMenuLabel>
-              <DropdownMenuSeparator />
+              <DropdownMenuSeparator className={""} />
               <DropdownMenuItem
                 className="cursor-pointer"
+                inset=""
                 onClick={() => {
                   setSelectedCategory(category);
-                  setTitle(category.title);
+                  setTitle(category.name);
                   setDescription(category.description);
-                  setHref(category.href);
                   setEditMode(true);
                   setEditSheetOpen(true);
                 }}
               >
                 Edit
               </DropdownMenuItem>
-              <DropdownMenuItem className="cursor-pointer" onClick={() => handleDelete(category.id)}>
+              <DropdownMenuItem
+                className="cursor-pointer"
+                inset=""
+                onClick={() => handleDelete(category.id)}
+              >
                 Delete
               </DropdownMenuItem>
             </DropdownMenuContent>
@@ -273,23 +270,27 @@ export default function AdminCategories() {
         <div className="flex items-center py-4">
           <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
-              <Button variant="outline">Create a new category</Button>
+              <Button variant="primary" size="lg" className="">
+                Create a new category
+              </Button>
             </DialogTrigger>
             <DialogContent className="sm:max-w-[425px]">
-              <form onSubmit={handleSubmit}>
-                <DialogHeader>
-                  <DialogTitle>
-                    {editMode ? 'Edit Category' : 'Create category'}
+              <form onSubmit={handleCreate}>
+                <DialogHeader className="">
+                  <DialogTitle className="">
+                    {editMode ? "Edit Category" : "Create Category"}
                   </DialogTitle>
                   <DialogDescription className="mb-3">
                     {editMode
-                      ? 'Edit category. Click save when you are done.'
-                      : 'Create a new category. Click save when you are done.'}
+                      ? "Edit category. Click save when you are done."
+                      : "Create a new category. Click save when you are done."}
                   </DialogDescription>
                 </DialogHeader>
                 <div className="grid gap-4">
                   <div className="grid gap-3">
-                    <Label htmlFor="title">Title</Label>
+                    <Label className="" htmlFor="title">
+                      Name
+                    </Label>
                     <Input
                       id="title"
                       name="title"
@@ -306,24 +307,24 @@ export default function AdminCategories() {
                       onChange={(e) => setDescription(e.target.value)}
                     />
                   </div>
-                  <div className="grid gap-3">
-                    <Label htmlFor="location">Location</Label>
-                    <Input
-                      id="location"
-                      name="location"
-                      value={href}
-                      onChange={(e) => setHref(e.target.value)}
-                    />
-                  </div>
                 </div>
                 <DialogFooter className="mt-5">
                   <DialogClose asChild>
-                    <Button variant="outline">Cancel</Button>
+                    <Button variant="outline" size="lg">
+                      Cancel
+                    </Button>
                   </DialogClose>
-                  {loading ? (
+                  {isLoading ? (
                     <ButtonLoading />
                   ) : (
-                    <Button type="submit">Save changes</Button>
+                    <Button
+                      type="submit"
+                      className={""}
+                      variant="primary"
+                      size="lg"
+                    >
+                      Save changes
+                    </Button>
                   )}
                 </DialogFooter>
               </form>
@@ -331,11 +332,15 @@ export default function AdminCategories() {
           </Dialog>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline" className="ml-auto cursor-pointer">
+              <Button
+                variant="outline"
+                size="lg"
+                className="ml-auto cursor-pointer"
+              >
                 Columns <ChevronDown className="ml-2 h-4 w-4" />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
+            <DropdownMenuContent className="" align="end">
               {table
                 .getAllColumns()
                 .filter((column) => column.getCanHide())
@@ -344,7 +349,7 @@ export default function AdminCategories() {
                     key={column.id}
                     className="capitalize cursor-pointer"
                     checked={column.getIsVisible()}
-                    onCheckedChange={(value) =>
+                    onCheckedChange={(value: boolean) =>
                       column.toggleVisibility(!!value)
                     }
                   >
@@ -356,18 +361,20 @@ export default function AdminCategories() {
         </div>
 
         <Sheet open={editSheetOpen} onOpenChange={setEditSheetOpen}>
-          <SheetContent>
-            <form onSubmit={handleSubmit}>
-              <SheetHeader>
-                <SheetTitle>Edit Category</SheetTitle>
-                <SheetDescription>
+          <SheetContent className="">
+            <form onSubmit={handleUpdate}>
+              <SheetHeader className="">
+                <SheetTitle className="">Edit Category</SheetTitle>
+                <SheetDescription className="">
                   Edit category. Click save when done.
                 </SheetDescription>
               </SheetHeader>
 
               <div className="grid gap-4 py-4 px-6">
                 <div className="grid gap-3">
-                  <Label htmlFor="title">Title</Label>
+                  <Label className="" htmlFor="title">
+                    Title
+                  </Label>
                   <Input
                     id="title"
                     value={title}
@@ -375,75 +382,80 @@ export default function AdminCategories() {
                   />
                 </div>
                 <div className="grid gap-3">
-                  <Label htmlFor="description">Description</Label>
+                  <Label className="" htmlFor="description">
+                    Description
+                  </Label>
                   <Input
                     id="description"
                     value={description}
                     onChange={(e) => setDescription(e.target.value)}
                   />
                 </div>
-                <div className="grid gap-3">
-                  <Label htmlFor="href">Location</Label>
-                  <Input
-                    id="href"
-                    value={href}
-                    onChange={(e) => setHref(e.target.value)}
-                  />
-                </div>
               </div>
 
               <SheetFooter className="space-y-2">
                 <SheetClose asChild>
-                  <Button variant="outline">Cancel</Button>
+                  <Button className="" variant="outline">
+                    Cancel
+                  </Button>
                 </SheetClose>
-                {loading ? (
+                {isLoading ? (
                   <ButtonLoading />
                 ) : (
-                  <Button type="submit">Save changes</Button>
+                  <Button
+                    className=""
+                    type="submit"
+                    size="lg"
+                    variant="primary"
+                  >
+                    Save changes
+                  </Button>
                 )}
               </SheetFooter>
             </form>
           </SheetContent>
         </Sheet>
+
         <div className="rounded-md border">
-          <Table>
-            <TableHeader>
+          <Table className="">
+            <TableHeader className="">
               {table.getHeaderGroups().map((headerGroup) => (
-                <TableRow key={headerGroup.id}>
+                <TableRow className="" key={headerGroup.id}>
                   {headerGroup.headers.map((header) => (
-                    <TableHead key={header.id}>
+                    <TableHead className="" key={header.id}>
                       {header.isPlaceholder
                         ? null
                         : flexRender(
                             header.column.columnDef.header,
-                            header.getContext()
+                            header.getContext(),
                           )}
                     </TableHead>
                   ))}
                 </TableRow>
               ))}
             </TableHeader>
-            <TableBody>
-              {loading ? (
+            <TableBody className="">
+              {isLoading ? (
                 <AdminDataTableSkeleton />
               ) : table.getRowModel().rows?.length ? (
                 table.getRowModel().rows.map((row) => (
                   <TableRow
+                    className=""
                     key={row.id}
-                    data-state={row.getIsSelected() && 'selected'}
+                    data-state={row.getIsSelected() && "selected"}
                   >
                     {row.getVisibleCells().map((cell) => (
-                      <TableCell key={cell.id}>
+                      <TableCell className="" key={cell.id}>
                         {flexRender(
                           cell.column.columnDef.cell,
-                          cell.getContext()
+                          cell.getContext(),
                         )}
                       </TableCell>
                     ))}
                   </TableRow>
                 ))
               ) : (
-                <TableRow>
+                <TableRow className={""}>
                   <TableCell
                     colSpan={columns.length}
                     className="h-24 text-center"
@@ -457,12 +469,12 @@ export default function AdminCategories() {
         </div>
         <div className="flex items-center justify-end space-x-2 py-4">
           <div className="text-muted-foreground flex-1 text-sm">
-            {table.getFilteredSelectedRowModel().rows.length} of{' '}
+            {table.getFilteredSelectedRowModel().rows.length} of{" "}
             {table.getFilteredRowModel().rows.length} row(s) selected.
           </div>
           <div className="space-x-2">
             <Button
-              variant="outline"
+              variant="primary"
               size="sm"
               onClick={() => table.previousPage()}
               disabled={!table.getCanPreviousPage()}
@@ -471,7 +483,7 @@ export default function AdminCategories() {
               Previous
             </Button>
             <Button
-              variant="outline"
+              variant="primary"
               size="sm"
               onClick={() => table.nextPage()}
               disabled={!table.getCanNextPage()}
