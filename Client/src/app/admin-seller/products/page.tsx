@@ -194,6 +194,7 @@ export default function AdminProducts() {
               categories={categories}
               onSubmit={handleCreate}
               loading={isCreating}
+              ownerId={"019c4e88-0cd9-705d-8dd9-5f6f75f3257e"}
             />
 
             <DropdownMenu>
@@ -226,6 +227,7 @@ export default function AdminProducts() {
         <UpdateProductUi
           open={openEdit}
           onOpenChange={setOpenEdit}
+          ownerId={"019c4e88-0cd9-705d-8dd9-5f6f75f3257e"}
           categories={categories}
           initialProduct={selectedProduct}
           onSubmit={handleUpdate}

@@ -26,7 +26,7 @@ const BestSellingSection = memo(function BestSellingSection() {
     refetch,
   } = useGetAllProductsQuery(undefined);
 
-  const products = productsData?.products || [];
+  const products = productsData?.content || [];
 
 
   const [addToCartMutation] = useAddToCartMutation();

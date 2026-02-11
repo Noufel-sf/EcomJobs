@@ -82,7 +82,7 @@ export const productsApi = createApi({
 
     createProduct: builder.mutation({
       query: (formData) => ({
-        url: "/",
+        url: "",
         method: "POST",
         body: formData,
       }),
@@ -92,7 +92,7 @@ export const productsApi = createApi({
     updateProduct: builder.mutation({
       query: ({ id, formData }) => ({
         url: `/${id}`,
-        method: "PATCH",
+        method: "PUT",
         body: formData,
       }),
       invalidatesTags: (result, error, { id }) => [
@@ -112,7 +112,7 @@ export const productsApi = createApi({
     updateProductStatus: builder.mutation({
       query: ({ id, active }) => ({
         url: `/${id}`,
-        method: "PATCH",
+        method: "PUT",
         body: { active },
       }),
       invalidatesTags: ["Products"],

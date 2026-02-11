@@ -26,13 +26,14 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Plus, X, ChevronDown } from "lucide-react";
 import Image from "next/image";
-import type { Categorie } from "@/lib/DatabaseTypes";
+import type { Categorie , Product } from "@/lib/DatabaseTypes";
 
 interface CreateProductUiProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   categories: Categorie[];
   onSubmit: (formData: FormData) => Promise<void>;
+  ownerId: string;
   loading: boolean;
 }
 
@@ -41,17 +42,16 @@ export default function CreateProductUi({
   onOpenChange,
   categories,
   onSubmit,
+  ownerId , 
   loading,
 }: CreateProductUiProps) {
   // Internal state management - matching database Product schema
   const [name, setName] = useState("");
-  const [ownerId, setOwnerId] = useState("019c4452-fa9c-7786-8914-d7292191dcd8"); // This will be set to the current seller's ID in the parent component  
   const [smallDesc, setSmallDesc] = useState("");
   const [bigDesc, setBigDesc] = useState("");
   const [price, setPrice] = useState("");
   const [classification, setClassification] = useState("");
   const [available, setAvailable] = useState(true);
-  const [sponsored, setSponsored] = useState(false);
   const [mainImage, setMainImage] = useState<File | null>(null);
   const [mainImagePreview, setMainImagePreview] = useState<string | null>(null);
   const [extraImages, setExtraImages] = useState<(File | null)[]>([
@@ -73,7 +73,6 @@ export default function CreateProductUi({
     setPrice("");
     setClassification("");
     setAvailable(true);
-    setSponsored(false);
     setMainImage(null);
     setMainImagePreview(null);
     setExtraImages([null, null, null]);
@@ -86,32 +85,50 @@ export default function CreateProductUi({
   const handleCreateProduct = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
-    const formData = new FormData();
-    formData.append("name", name);
-    formData.append("smallDesc", smallDesc);
-    formData.append("bigDesc", bigDesc);
-    formData.append("price", price);
-    formData.append("prod_class", classification);
-    formData.append("sizes", JSON.stringify(sizes));
-    formData.append("colors", JSON.stringify(colors));
-    formData.append("owner", ownerId);
+    // const formData = new FormData();
+    // formData.append("name", name);
+    // formData.append("smallDesc", smallDesc);
+    // formData.append("bigDesc", bigDesc);
+    // formData.append("price", price);
+    // formData.append("prod_class", classification);
+    // formData.append("sizes", JSON.stringify(sizes));
+    // formData.append("colors", JSON.stringify(colors));
+    // formData.append("owner", ownerId);
 
-    if (mainImage) {
-      formData.append("mainImage", mainImage);
-    }
+    // if (mainImage) {
+    //   formData.append("mainImage", mainImage);
+    // }
 
-    extraImages.forEach((image) => {
-      if (image) {
-        formData.append("extraImages", image);
-      }
-    });
+    // extraImages.forEach((image) => {
+    //   if (image) {
+    //     formData.append("extraImages", image);
+    //   }
+    // });
 
-    console.log("product data:");
-    for (const [key, value] of formData.entries()) {
-      console.log(`  ${key}:`, value);
-    }
+    // console.log("product data:");
+    // for (const [key, value] of formData.entries()) {
+    //   console.log(`  ${key}:`, value);
+    // }
 
-    await onSubmit(formData);
+    // await onSubmit(formData);
+
+    const data = {
+      name: name,
+      smallDesc: smallDesc,
+      bigDesc: bigDesc, 
+      price: parseFloat(price),
+      prod_class: classification,
+      sizes: sizes,
+      colors: colors,
+      owner: ownerId,
+      mainImage: "dsfsdfsdfsdfsdf",
+      extraImages: ["sdfsdfsdfs" , "dsfsfsdfsdf"],
+    };
+
+
+    await onSubmit(data as Product);
+
+
     resetForm();
   };
 
@@ -271,17 +288,7 @@ export default function CreateProductUi({
                   />
                   <Label htmlFor="available">Available</Label>
                 </div>
-                <div className="flex items-center gap-2">
-                  <Checkbox
-                    id="sponsored"
-                    className=""
-                    checked={sponsored}
-                    onCheckedChange={(checked) =>
-                      setSponsored(checked === true)
-                    }
-                  />
-                  <Label className="" htmlFor="sponsored">Sponsored</Label>
-                </div>
+               
               </div>
 
               {/* Main Image */}
@@ -308,7 +315,7 @@ export default function CreateProductUi({
                     <button
                       type="button"
                       onClick={removeMainImage}
-                      className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 hover:bg-red-600"
+                      className="absolute top-1 cursor-pointer right-1 bg-red-500 text-white rounded-full p-1 hover:bg-red-600"
                     >
                       <X className="h-4 w-4" />
                     </button>
@@ -348,7 +355,7 @@ export default function CreateProductUi({
                           <button
                             type="button"
                             onClick={() => removeExtraImage(index)}
-                            className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 hover:bg-red-600"
+                            className="absolute top-1 cursor-pointer right-1 bg-red-500 text-white rounded-full p-1 hover:bg-red-600"
                           >
                             <X className="h-3 w-3" />
                           </button>
@@ -413,7 +420,7 @@ export default function CreateProductUi({
                           variant="secondary"
                           size="lg"
                           onClick={() => toggleSize(size)}
-                          className={`px-3 py-2 text-sm rounded border transition-colors ${
+                          className={`px-3 cursor-pointer py-2 text-sm rounded border transition-colors ${
                             sizes.includes(size)
                               ? "bg-primary text-primary-foreground border-primary"
                               : "bg-background hover:bg-accent border-border"
@@ -447,7 +454,7 @@ export default function CreateProductUi({
                           variant="secondary"
                           type="button"
                           onClick={() => toggleSize(size)}
-                          className={`px-3 py-2 text-sm rounded border transition-colors ${
+                          className={`px-3 cursor-pointer py-2 text-sm rounded border transition-colors ${
                             sizes.includes(size)
                               ? "bg-primary text-primary-foreground border-primary"
                               : "bg-background hover:bg-accent border-border"
@@ -502,7 +509,7 @@ export default function CreateProductUi({
                     />
                     <Button
                       type="button"
-                      className=""
+                      className="cursor-pointer"
                       variant="secondary"
                       size="icon"
                       onClick={addColor}
@@ -530,7 +537,7 @@ export default function CreateProductUi({
                             <span className="text-sm">{color}</span>
                             <button
                               type="button"
-                              className="text-red-500 hover:text-red-600"
+                              className="cursor-pointer text-red-500 hover:text-red-600"
                               onClick={() => removeColor(index)}
                             >
                               <X className="w-3 h-3" />
@@ -553,14 +560,14 @@ export default function CreateProductUi({
 
           <DialogFooter className="mt-5">
             <DialogClose asChild>
-              <Button size="lg" className="" variant="outline">
+              <Button size="lg" className="cursor-pointer" variant="outline">
                 Cancel
               </Button>
             </DialogClose>
             {loading ? (
               <ButtonLoading />
             ) : (
-              <Button size="lg" className="" variant="primary" type="submit">
+              <Button size="lg" className="cursor-pointer" variant="primary" type="submit">
                 Save changes
               </Button>
             )}

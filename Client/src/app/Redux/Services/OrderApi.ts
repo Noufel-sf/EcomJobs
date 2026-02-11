@@ -7,17 +7,15 @@ const API_URL =
 interface CreateOrderRequest {
   firstName: string;
   lastName: string;
-  phone: string;
+  note:string ;
+  state:string ;
   city: string;
-  wilaya: string;
-  shippingMethod: string;
   notes?: string;
-  items: {
-    productId: string;
+  products: {
+    product: string;
     name: string;
-    price: number;
-    image: string;
-    quantity: number;
+    size: string;
+    prodNb: number;
   }[];
   total: number;
 }
@@ -43,7 +41,7 @@ interface GetSellerOrdersResponse {
 export const orderApi = createApi({
   reducerPath: "orderApi",
   baseQuery: fetchBaseQuery({
-    baseUrl: `${API_URL}/orderss`,
+    baseUrl: `${API_URL}/orders`,
     // credentials: "include",
   }),
   tagTypes: ["Orders"],

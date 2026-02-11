@@ -5,9 +5,7 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL || "https://wadkniss-1.onrender.
 interface Classification {
   id: string;
   name: string;
-  description?: string;
-  createdAt?: string;
-  updatedAt?: string;
+  desc?: string;
 }
 
 interface GetAllClassificationsResponse {
@@ -16,13 +14,13 @@ interface GetAllClassificationsResponse {
 
 interface CreateClassificationData {
   name: string;
-  description?: string;
+  desc?: string;
 }
 
 interface UpdateClassificationData {
   id: string;
   name?: string;
-  description?: string;
+  desc?: string;
 }
 
 export const classificationApi = createApi({
@@ -41,7 +39,7 @@ export const classificationApi = createApi({
 
     addClassification: builder.mutation<Classification, CreateClassificationData>({
       query: (data) => ({
-        url: "/",
+        url: "",
         method: "POST",
         body: data,
       }),
@@ -51,7 +49,7 @@ export const classificationApi = createApi({
     updateClassification: builder.mutation<Classification, UpdateClassificationData>({
       query: ({ id, ...data }) => ({
         url: `/${id}`,
-        method: "PATCH",
+        method: "PUT",
         body: data,
       }),
       invalidatesTags: ["Classifications"],

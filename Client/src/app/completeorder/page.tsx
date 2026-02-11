@@ -62,14 +62,12 @@ function CompleteOrder() {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
 
-  // Optimistic state for order submission
   const [optimisticStatus, setOptimisticStatus] = useOptimistic<
     "idle" | "submitting" | "success"
   >("idle");
 
   const displayTotal = total;
 
-  // Enhanced shipping options with icons
   const shippingOptionsWithIcons = useMemo(
     () =>
       shippingOptions.map((option) => ({
@@ -84,27 +82,25 @@ function CompleteOrder() {
     defaultValues: {
       firstName: "",
       lastName: "",
-      phone: "",
-      address: "",
+      phoneNumber: 0,
       city: "",
-      wilaya: "",
-      shippingMethod: "standard",
-      notes: "",
+      state: "",
+      note: "",
     },
   });
 
-  const selectedShippingMethod = form.watch("shippingMethod");
+  // const selectedShippingMethod = form.watch("shippingMethod");
 
-  const { shippingCost, grandTotal } = useMemo(() => {
-    const selectedShipping = shippingOptions.find(
-      (opt) => opt.id === selectedShippingMethod,
-    );
-    const cost = selectedShipping?.price || 0;
-    return {
-      shippingCost: cost,
-      grandTotal: displayTotal + cost,
-    };
-  }, [selectedShippingMethod, displayTotal]);
+  // const { shippingCost, grandTotal } = useMemo(() => {
+  //   const selectedShipping = shippingOptions.find(
+  //     (opt) => opt.id === selectedShippingMethod,
+  //   );
+  //   const cost = selectedShipping?.price || 0;
+  //   return {
+  //     shippingCost: cost,
+  //     grandTotal: displayTotal + cost,
+  //   };
+  // }, [selectedShippingMethod, displayTotal]);
 
   const SubmitOrder = useCallback(
     async (data: CheckoutFormValues) => {
@@ -113,8 +109,7 @@ function CompleteOrder() {
         try {
           await createOrder({
             ...data,
-            items: cart,
-            total: grandTotal,
+            products: cart,
           }).unwrap();
           await clearCart().unwrap();
           setOptimisticStatus("success");
@@ -126,7 +121,7 @@ function CompleteOrder() {
         }
       });
     },
-    [cart, grandTotal, router, createOrder, clearCart, setOptimisticStatus],
+    [cart, displayTotal, router, createOrder, clearCart, setOptimisticStatus],
   );
 
   const isSubmitting = isPending || optimisticStatus === "submitting";
@@ -240,7 +235,7 @@ function CompleteOrder() {
 
                     <FormField
                       control={form.control}
-                      name="phone"
+                      name="phoneNumber"
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>Phone Number *</FormLabel>
@@ -315,9 +310,8 @@ function CompleteOrder() {
                       />
                     </div>
 
-                    <Separator className="my-6" />
 
-                    <FormField
+                    {/* <FormField
                       control={form.control}
                       name="shippingMethod"
                       render={({ field }) => (
@@ -378,7 +372,7 @@ function CompleteOrder() {
                           <FormMessage />
                         </FormItem>
                       )}
-                    />
+                    /> */}
 
                     <Separator className="my-6" />
 
@@ -412,7 +406,7 @@ function CompleteOrder() {
                   variant="default"
                   aria-label={isSubmitting ? "Processing order" : "Place order"}
                 >
-                  {isSubmitting ? (
+                  {/* {isSubmitting ? (
                     <>
                       <Loader2
                         className="animate-spin h-4 w-4 mr-2"
@@ -425,7 +419,8 @@ function CompleteOrder() {
                       <Lock className="w-4 h-4 mr-2" aria-hidden="true" />
                       Place Order - {grandTotal.toFixed(2)} DZ
                     </>
-                  )}
+                  )} */}
+                  submit your order
                 </Button>
 
                 <p className="text-xs text-center text-muted-foreground">
@@ -495,9 +490,9 @@ function CompleteOrder() {
 
                   <div className="flex justify-between text-base pt-2">
                     <dt className="font-bold">Total</dt>
-                    <dd className="font-bold text-green-500 text-xl">
+                    {/* <dd className="font-bold text-green-500 text-xl">
                       {grandTotal.toFixed(2)} DZ
-                    </dd>
+                    </dd> */}
                   </div>
                 </dl>
 

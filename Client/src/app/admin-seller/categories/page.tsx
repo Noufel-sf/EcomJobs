@@ -92,42 +92,46 @@ export default function AdminCategories() {
   const [updateCategory] = useUpdateClassificationMutation();
 
 
-  const handleCreate = async () => {
-    const formData = new FormData();
-    formData.append("name", title);
-    formData.append("desc", description);
-    console.log("product data:");
-    for (const [key, value] of formData.entries()) {
-      console.log(`  ${key}:`, value);
-    }
-
+  const handleCreate = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    console.log("Creating category with title:", title, "and description:", description);
+  
     try {
-      const newCategory = await createCategory(formData).unwrap();
+      const newCategory = await createCategory({ name: title, desc: description }).unwrap();
       setData((prev) => [...prev, newCategory]);
       toast.success("Category created successfully");
+      setOpen(false);
+      setTitle("");
+      setDescription("");
     } catch (error: any) {
       toast.error(error?.data?.message || "Failed to create category");
     }
   };
 
-  const handleUpdate = async (id: string) => {
-    try {
-      const formData = new FormData();
-      formData.append("name", title);
-      formData.append("desc", description);
+  const handleUpdate = async (e: React.FormEvent<HTMLFormElement>, id: string) => {
 
-      const updated = await updateCategory({ id }).unwrap();
+
+    e.preventDefault();
+     if (!selectedCategory) return;
+
+    try{
+      console.log("updated data is " , title , description);
+      
+      const updated = await updateCategory({ id: selectedCategory.id, name: title, desc: description }).unwrap();
 
       setData((prev) =>
         prev.map((category) =>
           category.id === id ? { ...category, ...updated } : category,
         ),
       );
+      setTitle("");
+      setDescription("");
 
       toast.success("Category updated successfully");
       setSelectedCategory(null);
       setEditSheetOpen(false);
       setEditMode(false);
+
     } catch (error: any) {
       toast.error(error?.data?.message || "Failed to update category");
     }
@@ -189,11 +193,11 @@ export default function AdminCategories() {
       ),
     },
     {
-      accessorKey: "description",
+      accessorKey: "desc",
       header: "Description",
       cell: ({ row }) => (
         <div className="text-sm text-muted-foreground">
-          {row.getValue("description")}
+          {row.getValue("desc")}
         </div>
       ),
     },
@@ -220,7 +224,7 @@ export default function AdminCategories() {
                 onClick={() => {
                   setSelectedCategory(category);
                   setTitle(category.name);
-                  setDescription(category.description);
+                  setDescription(category.desc);
                   setEditMode(true);
                   setEditSheetOpen(true);
                 }}

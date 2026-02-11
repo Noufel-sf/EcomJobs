@@ -21,31 +21,31 @@ import {
   NavigationMenuTrigger,
 } from "@/components/ui/navigation-menu";
 import { useGetCartQuery } from "@/Redux/Services/CartApi";
-import { useGetCategoriesQuery, useLazySearchProductsQuery } from "@/Redux/Services/ProductsApi";
+import {  useLazySearchProductsQuery } from "@/Redux/Services/ProductsApi";
 import { useLogoutMutation } from "@/Redux/Services/AuthApi";
+import { useGetAllClassificationsQuery } from "@/Redux/Services/ClassificationApi";
 import { useAppSelector, useAppDispatch } from "@/Redux/hooks";
 import { logout as logoutAction } from "@/Redux/Slices/AuthSlice";
 import toast from "react-hot-toast";
-import { Categorie } from "@/lib/DatabaseTypes";
+import { Categorie, Product } from "@/lib/DatabaseTypes";
 
 interface ListItemProps {
-  title: string;
+  name: string;
   children: React.ReactNode;
-  href: string;
 }
 
-function ListItem({ title, children, href }: ListItemProps) {
+function ListItem({ name, children }: ListItemProps) {
   return (
     <li>
       <NavigationMenuLink asChild className="">
-        <Link href={href} className="block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground">
+        <div  className="block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground">
           <div className="text-sm font-medium leading-none">
-            {title}
+            {name}
           </div>
           <p className="line-clamp-2 text-sm leading-snug text-muted-foreground">
             {children}
           </p>
-        </Link>
+        </div>
       </NavigationMenuLink>
     </li>
   );
@@ -56,8 +56,8 @@ const Navbar = memo(function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
   const { setTheme } = useTheme();
 
-  const { data: categoriesData } = useGetCategoriesQuery(undefined);
-  const categories = categoriesData || [];
+   const { data: categoriesData, isLoading } = useGetAllClassificationsQuery();
+   const categories = categoriesData?.content || [];
 
   const dispatch = useAppDispatch();
   const user = useAppSelector((state) => state.auth.user);
@@ -134,7 +134,7 @@ const Navbar = memo(function Navbar() {
               aria-label="Search results"
             >
               {searchResults.length > 0 ? (
-                searchResults.map((product) => (
+                searchResults.map((product : Product) => (
                   <Link
                     key={product.id}
                     href={`/product/${product.id}`}
@@ -196,11 +196,10 @@ const Navbar = memo(function Navbar() {
                       <ul className="grid md:w-[400px] md:grid-cols-2 gap-3 p-4">
                         {categories.map((category:Categorie) => (
                           <ListItem
-                            key={category.title}
-                            title={category.title}
-                            href={category.href}
+                            key={category.name}
+                            name={category.name}
                           >
-                            {category.description}
+                            {category.desc}
                           </ListItem>
                         ))}
                       </ul>

@@ -216,14 +216,13 @@ const SingleProduct = () => {
           </Swiper>
         </section>
 
-        {/* Right: Product Info */}
         <section className="space-y-6" aria-label="Product information">
-          <div className="space-y-4">
+          <div className="space-y-2">
             <h1 className="text-3xl lg:text-4xl font-bold mb-3 leading-tight">
               {singleProduct?.name}
             </h1>
             <p className="text-muted-foreground">
-              {singleProduct?.description ||
+              {singleProduct?.bigDesc ||
                 "Lorem ipsum dolor sit amet, consectetur adipiscing elit Lorem ipsum dolor sit amet, consectetur adipiscing elit  Lorem ipsum dolor sit amet, consectetur adipiscing elit  Lorem ipsum dolor sit amet, consectetur adipiscing elit ."}{" "}
             </p>
           </div>
@@ -307,14 +306,7 @@ const SingleProduct = () => {
             >
               ${singleProduct?.price}
             </span>
-            {singleProduct?.originalPrice && (
-              <span
-                className="text-xl text-muted-foreground line-through"
-                aria-label={`Original price: $${singleProduct?.originalPrice}`}
-              >
-                ${singleProduct?.originalPrice}
-              </span>
-            )}
+           
           </div>
 
           <Separator className="" />
@@ -363,11 +355,11 @@ const SingleProduct = () => {
                     aria-hidden="true"
                   />
                   <a
-                    href={`tel:${shopOwnerInfo.phone}`}
+                    href={`tel:${shopOwnerInfo.phoneNumber}`}
                     className="text-muted-foreground hover:text-purple-600 transition"
                     aria-label={`Call ${shopOwnerInfo.name}`}
                   >
-                    {shopOwnerInfo.phone}
+                    {shopOwnerInfo.phoneNumber}
                   </a>
                 </div>
               </address>

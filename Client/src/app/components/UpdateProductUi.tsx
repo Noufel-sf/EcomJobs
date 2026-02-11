@@ -29,14 +29,16 @@ import type { Categorie, Product } from "@/lib/DatabaseTypes";
 
 
 interface ProductWithRelations extends Product {
-  extra_images?: string[];
+  extraImages?: string[];
   sizes?: string[];
   colors?: string[];
+  prod_class?: string;
 }
 
 interface UpdateProductUiProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  ownerId: string;
   categories: Categorie[];
   initialProduct: ProductWithRelations | null;
   onSubmit: (id: string, formData: FormData) => Promise<void>;
@@ -47,11 +49,11 @@ export default function UpdateProductUi({
   open,
   onOpenChange,
   categories,
+  ownerId ,
   initialProduct,
   onSubmit,
   loading,
 }: UpdateProductUiProps) {
-
 
   const [name, setName] = useState('');
   const [smallDesc, setSmallDesc] = useState('');
@@ -59,39 +61,38 @@ export default function UpdateProductUi({
   const [price, setPrice] = useState('');
   const [classification, setClassification] = useState('');
   const [available, setAvailable] = useState(true);
-  const [sponsored, setSponsored] = useState(false);
-  const [mainImage, setMainImage] = useState<File | null>(null);
-  const [mainImagePreview, setMainImagePreview] = useState<string | null>(null);
-  const [currentMainImage, setCurrentMainImage] = useState<string | null>(null);
-  const [extraImages, setExtraImages] = useState<(File | null)[]>([null, null, null]);
-  const [extraImagePreviews, setExtraImagePreviews] = useState<(string | null)[]>([null, null, null]);
-  const [currentExtraImages, setCurrentExtraImages] = useState<string[]>([]);
+
   const [sizes, setSizes] = useState<string[]>([]);
   const [colors, setColors] = useState<string[]>([]);
   const [newColor, setNewColor] = useState('');
 
-  // Populate form when initialProduct changes
+  const [mainImage, setMainImage] = useState<File | null>(null);
+  const [mainImagePreview, setMainImagePreview] = useState<string | null>(null);
+  const [currentMainImage, setCurrentMainImage] = useState<string | null>(null);
+
+  const [extraImages, setExtraImages] = useState<(File | null)[]>([null, null, null]);
+  const [extraImagePreviews, setExtraImagePreviews] = useState<(string | null)[]>([null, null, null]);
+  const [currentExtraImages, setCurrentExtraImages] = useState<string[]>([]);
+
+
+
   useEffect(() => {
-    if (initialProduct) {
-      setName(initialProduct.name || '');
-      setSmallDesc(initialProduct.small_desc || '');
-      setBigDesc(initialProduct.big_desc || '');
-      setPrice(initialProduct.price?.toString() || '');
-      setClassification(initialProduct.classification || '');
+    if (open && initialProduct) {
+      setName(initialProduct.name ?? '');
+      setSmallDesc(initialProduct.smallDesc ?? '');
+      setBigDesc(initialProduct.bigDesc ?? '');
+      setPrice(initialProduct.price ? String(initialProduct.price) : '');
+      setClassification(initialProduct.prod_class ?? '');
       setAvailable(initialProduct.available ?? true);
-      setSponsored(initialProduct.sponsored ?? false);
-      setCurrentMainImage(initialProduct.main_img || null);
-      setCurrentExtraImages(initialProduct.extra_images || []);
-      setSizes(initialProduct.sizes || []);
-      setColors(initialProduct.colors || []);
-      setMainImage(null);
-      setMainImagePreview(null);
-      setExtraImages([null, null, null]);
-      setExtraImagePreviews([null, null, null]);
+      setSizes(initialProduct.sizes ?? []);
+      setColors(initialProduct.colors ?? []);
+      setCurrentMainImage(initialProduct.mainImage ?? null);
+      setCurrentExtraImages(initialProduct.extraImages ?? []);
     }
-  }, [initialProduct]);
+  }, [open, initialProduct]);
 
 
+  
   const resetForm = () => {
     setName('');
     setSmallDesc('');
@@ -99,7 +100,6 @@ export default function UpdateProductUi({
     setPrice('');
     setClassification('');
     setAvailable(true);
-    setSponsored(false);
     setMainImage(null);
     setMainImagePreview(null);
     setCurrentMainImage(null);
@@ -116,35 +116,45 @@ export default function UpdateProductUi({
     
     if (!initialProduct?.id) return;
     
-    const formData = new FormData();
-    formData.append('name', name);
-    formData.append('small_desc', smallDesc);
-    formData.append('big_desc', bigDesc);
-    formData.append('price', price);
-    formData.append('classification', classification);
-    formData.append('available', String(available));
-    formData.append('sponsored', String(sponsored));
-    formData.append('sizes', JSON.stringify(sizes));
-    formData.append('colors', JSON.stringify(colors));
+    // const formData = new FormData();
+    // formData.append('name', name);
+    // formData.append('small_desc', smallDesc);
+    // formData.append('big_desc', bigDesc);
+    // formData.append('price', price);
+    // formData.append('classification', classification);
+    // formData.append('available', String(available));
+    // formData.append('sizes', JSON.stringify(sizes));
+    // formData.append('colors', JSON.stringify(colors));
     
-    if (mainImage) {
-      formData.append('main_img', mainImage);
-    }
+    // if (mainImage) {
+    //   formData.append('main_img', mainImage);
+    // }
     
-    extraImages.forEach((image) => {
-      if (image) {
-        formData.append('extra_images', image);
-      }
-    });
+    // extraImages.forEach((image) => {
+    //   if (image) {
+    //     formData.append('extra_images', image);
+    //   }
+    // });
 
-    // Debug: Log FormData contents properly
-    console.log("product data:");
-    for (const [key, value] of formData.entries()) {
-      console.log(`  ${key}:`, value);
-    }
+    // // Debug: Log FormData contents properly
+    // console.log("product data:");
+    // for (const [key, value] of formData.entries()) {
+    //   console.log(`  ${key}:`, value);
+    // }
     
-
-    await onSubmit(initialProduct.id, formData);
+      const data = {
+      name: name,
+      smallDesc: smallDesc,
+      bigDesc: bigDesc, 
+      price: parseFloat(price),
+      prod_class: classification,
+      sizes: sizes,
+      colors: colors,
+      owner: ownerId,
+      mainImage: "dsfsdfsdfsdfsdf",
+      extraImages: ["sdfsdfsdfs" , "dsfsfsdfsdf"],
+    };
+    await onSubmit(initialProduct.id, data);
   };
 
   const handleOpenChange = (isOpen: boolean) => {
@@ -227,9 +237,9 @@ export default function UpdateProductUi({
     <Sheet open={open} onOpenChange={handleOpenChange}>
       <SheetContent className="sm:max-w-250 p-12 overflow-y-auto">
         <form onSubmit={handleUpdateProduct}>
-          <SheetHeader>
-            <SheetTitle>Edit Product</SheetTitle>
-            <SheetDescription>
+          <SheetHeader className={""}>
+            <SheetTitle className={""} >Edit Product</SheetTitle>
+            <SheetDescription className={""}>
               Make changes to the product below.
             </SheetDescription>
           </SheetHeader>
@@ -238,7 +248,7 @@ export default function UpdateProductUi({
             {/* Left Column - Main Info */}
             <div className="md:col-span-2 space-y-4">
               <div className="grid gap-3">
-                <Label htmlFor="name">Name</Label>
+                <Label className={""} htmlFor="name">Name</Label>
                 <Input
                   id="name"
                   value={name}
@@ -246,7 +256,7 @@ export default function UpdateProductUi({
                 />
               </div>
               <div className="grid gap-3">
-                <Label htmlFor="smallDesc">Short Description</Label>
+                <Label className={""} htmlFor="smallDesc">Short Description</Label>
                 <Input
                   id="smallDesc"
                   value={smallDesc}
@@ -255,7 +265,7 @@ export default function UpdateProductUi({
                 />
               </div>
               <div className="grid gap-3">
-                <Label htmlFor="bigDesc">Full Description</Label>
+                <Label className={""} htmlFor="bigDesc">Full Description</Label>
                 <textarea
                   id="bigDesc"
                   value={bigDesc}
@@ -266,8 +276,9 @@ export default function UpdateProductUi({
                 />
               </div>
               <div className="grid gap-3">
-                <Label htmlFor="price">Price</Label>
+                <Label className={""} htmlFor="price">Price</Label>
                 <Input
+                  className={""}
                   id="price"
                   type="number"
                   step="0.01"
@@ -276,29 +287,21 @@ export default function UpdateProductUi({
                 />
               </div>
 
-              {/* Toggles for available and sponsored */}
               <div className="flex gap-6">
                 <div className="flex items-center gap-2">
                   <Checkbox
+                    className={""}
                     id="available"
                     checked={available}
                     onCheckedChange={(checked) => setAvailable(checked === true)}
                   />
-                  <Label htmlFor="available">Available</Label>
+                  <Label className={""} htmlFor="available">Available</Label>
                 </div>
-                <div className="flex items-center gap-2">
-                  <Checkbox
-                    id="sponsored"
-                    checked={sponsored}
-                    onCheckedChange={(checked) => setSponsored(checked === true)}
-                  />
-                  <Label htmlFor="sponsored">Sponsored</Label>
-                </div>
+              
               </div>
 
-              {/* Main Image */}
-              <div className="grid gap-3">
-                <Label htmlFor="mainImage">Main Product Image</Label>
+              {/* <div className="grid gap-3">
+                <Label className={""} htmlFor="mainImage">Main Product Image</Label>
                 <Input
                   id="mainImage"
                   type="file"
@@ -338,9 +341,8 @@ export default function UpdateProductUi({
                 )}
               </div>
 
-              {/* Extra Images */}
               <div className="grid gap-3">
-                <Label>Extra Images (Up to 3)</Label>
+                <Label className={""} >Extra Images (Up to 3)</Label>
                 <div className="grid grid-cols-3 gap-4">
                   {[0, 1, 2].map((index) => (
                     <div key={index} className="space-y-2">
@@ -387,14 +389,14 @@ export default function UpdateProductUi({
                     </div>
                   ))}
                 </div>
-              </div>
+              </div> */}
 
               {/* Classification/Category */}
               <div className="grid gap-3">
-                <Label>Category</Label>
+                <Label className={""} >Category</Label>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="outline" className="w-full justify-between cursor-pointer">
+                    <Button size="sm" variant="outline" className="w-full justify-between cursor-pointer">
                       {classification
                         ? categories.find((cat) => cat.id === classification)?.name
                         : "Select category"}
@@ -403,10 +405,11 @@ export default function UpdateProductUi({
                   </DropdownMenuTrigger>
                   <DropdownMenuContent className="w-56">
                     <DropdownMenuLabel>Categories</DropdownMenuLabel>
-                    <DropdownMenuSeparator />
+                    <DropdownMenuSeparator className={""} />
                     {categories.map((cat) => (
                       <DropdownMenuItem
                         key={cat.id}
+                        inset
                         className="cursor-pointer"
                         onClick={() => setClassification(cat.id)}
                       >
@@ -421,7 +424,7 @@ export default function UpdateProductUi({
             {/* Right Column - Sizes */}
             <div className="space-y-4">
               <div className="grid gap-3">
-                <Label>Available Sizes</Label>
+                <Label className={""}>Available Sizes</Label>
                 <div className="border rounded-lg p-4 space-y-2 max-h-[500px] overflow-y-auto">
                   <div className="space-y-2">
                     <p className="text-sm font-medium text-muted-foreground">Clothing Sizes</p>
@@ -431,7 +434,7 @@ export default function UpdateProductUi({
                           key={size}
                           type="button"
                           onClick={() => toggleSize(size)}
-                          className={`px-3 py-2 text-sm rounded border transition-colors ${
+                          className={`px-3 py-2 cursor-pointer text-sm rounded border transition-colors ${
                             sizes.includes(size)
                               ? 'bg-primary text-primary-foreground border-primary'
                               : 'bg-background hover:bg-accent border-border'
@@ -450,7 +453,7 @@ export default function UpdateProductUi({
                           key={size}
                           type="button"
                           onClick={() => toggleSize(size)}
-                          className={`px-3 py-2 text-sm rounded border transition-colors ${
+                          className={`px-3 cursor-pointer py-2 text-sm rounded border transition-colors ${
                             sizes.includes(size)
                               ? 'bg-primary text-primary-foreground border-primary'
                               : 'bg-background hover:bg-accent border-border'
@@ -478,7 +481,7 @@ export default function UpdateProductUi({
 
               {/* Colors Section */}
               <div className="grid gap-3">
-                <Label>Product Colors</Label>
+                <Label className="">Product Colors</Label>
                 <div className="border rounded-lg p-4 space-y-3">
                   {/* Add new color */}
                   <div className="flex gap-2 items-center">
@@ -497,7 +500,8 @@ export default function UpdateProductUi({
                     />
                     <Button
                       type="button"
-                      variant="secondary"
+                      className={"cursor-pointer"}
+                      variant="primary"
                       size="icon"
                       onClick={addColor}
                       disabled={!newColor.trim()}
@@ -525,7 +529,7 @@ export default function UpdateProductUi({
                             <span className="text-sm">{color}</span>
                             <button
                               type="button"
-                              className="text-red-500 hover:text-red-600"
+                              className="text-red-500 cursor-pointer hover:text-red-600"
                               onClick={() => removeColor(index)}
                             >
                               <X className="w-3 h-3" />

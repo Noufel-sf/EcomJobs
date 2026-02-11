@@ -39,7 +39,7 @@ export interface Order {
   id: string; 
   first_name: string; 
   last_name: string; 
-  phone_number: number; 
+  phoneNumber: number; 
   city: string; 
   state: number | null; 
   delivery_cost: number | null; 

@@ -54,6 +54,7 @@ export const createProductColumns = ({
     header: "ID",
     cell: ({ row }) => <div className="font-medium">{row.getValue("id")}</div>,
   },
+
   // {
   //   accessorKey: "MainImage",
   //   header: "MainImage",
@@ -102,7 +103,7 @@ export const createProductColumns = ({
       return (
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="h-8 px-2 cursor-pointer">
+            <Button size="lg" variant="ghost" className="h-8 px-2 cursor-pointer">
               <Badge
                 className={`cursor-pointer ${
                   status === "active"
@@ -114,10 +115,11 @@ export const createProductColumns = ({
               </Badge>
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuLabel>Change Status</DropdownMenuLabel>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem
+          <DropdownMenuContent className={""} align="end">
+            <DropdownMenuLabel className={""}>Change Status</DropdownMenuLabel>
+            <DropdownMenuSeparator className={""} />
+            <DropdownMenuItem 
+              inset
               className="cursor-pointer"
               onClick={() => handleStatusChange(product.id, "active")}
             >
@@ -126,10 +128,11 @@ export const createProductColumns = ({
               </Badge>
             </DropdownMenuItem>
             <DropdownMenuItem
-              className="cursor-pointer"
+              className={""}
+              inset
               onClick={() => handleStatusChange(product.id, "pending")}
             >
-              <Badge className="bg-yellow-500/10 text-yellow-600 dark:bg-yellow-500/20 dark:text-yellow-400">
+              <Badge variant={""} className="bg-yellow-500/10 text-yellow-600 dark:bg-yellow-500/20 dark:text-yellow-400">
                 Pending
               </Badge>
             </DropdownMenuItem>
