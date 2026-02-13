@@ -41,7 +41,7 @@ import type { Order } from "@/lib/DatabaseTypes";
 export default function AdminAllOrders() {
 
   const { data: ordersData, isLoading: ordersLoading } = useGetSellerOrdersQuery();
-  const orders = ordersData?.orders || [];
+  const orders = ordersData?.content || [];
   const [deleteOrderMutation] = useDeleteOrderMutation();
   const [updateOrderStatus] = useUpdateOrderStatusMutation();
 

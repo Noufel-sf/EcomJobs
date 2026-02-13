@@ -9,12 +9,12 @@ import {
 } from "react";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
+import { Loader2 } from "lucide-react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { RadioGroup } from "@/components/ui/radio-group";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -48,7 +48,6 @@ import {
   Package,
   ArrowLeft,
   ShoppingBag,
-  Loader2,
 } from "lucide-react";
 import { checkoutSchema, type CheckoutFormValues } from "@/lib/zodValidation";
 import { wilayas, shippingOptions } from "@/lib/data";
@@ -82,7 +81,7 @@ function CompleteOrder() {
     defaultValues: {
       firstName: "",
       lastName: "",
-      phoneNumber: 0,
+      phoneNumber: "",
       city: "",
       state: "",
       note: "",
@@ -104,24 +103,38 @@ function CompleteOrder() {
 
   const SubmitOrder = useCallback(
     async (data: CheckoutFormValues) => {
+      const formattedProducts = cart.map((item) => ({
+        product: item.productId,
+        prodNb: item.quantity,
+        size: item.size || "",
+        color: item.color || "",
+      }));
+
+      const payload = {
+        firstName: data.firstName,
+        lastName: data.lastName,
+        phoneNumber: Number(data.phoneNumber),
+        state: Number(data.state), // you named it wilaya in form
+        city: data.city,
+        note: data.note || "",
+        products: formattedProducts,
+      };
+
       startTransition(async () => {
         setOptimisticStatus("submitting");
+
         try {
-          await createOrder({
-            ...data,
-            products: cart,
-          }).unwrap();
+          await createOrder(payload).unwrap();
           await clearCart().unwrap();
+
           setOptimisticStatus("success");
           toast.success("Order placed successfully!");
-          router.push(`/thankyou`);
-        } catch (error: unknown) {
-          const err = error as { data?: { message?: string } };
-          toast.error(err?.data?.message || "Order failed");
+        } catch (error: any) {
+          toast.error(error?.data?.message || "Order failed");
         }
       });
     },
-    [cart, displayTotal, router, createOrder, clearCart, setOptimisticStatus],
+    [cart, createOrder, clearCart, setOptimisticStatus],
   );
 
   const isSubmitting = isPending || optimisticStatus === "submitting";
@@ -190,7 +203,7 @@ function CompleteOrder() {
           <section className="lg:col-span-2" aria-label="Checkout form">
             <Form {...form}>
               <form
-                onSubmit={form.handleSubmit(SubmitOrder)}
+                onSubmit={form.handleSubmit((data) => SubmitOrder(data))}
                 className="space-y-6"
                 aria-label="Complete order form"
               >
@@ -279,17 +292,17 @@ function CompleteOrder() {
 
                       <FormField
                         control={form.control}
-                        name="wilaya"
+                        name="state"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Wilaya *</FormLabel>
+                            <FormLabel>State *</FormLabel>
                             <Select
                               onValueChange={field.onChange}
-                              defaultValue={field.value}
+                              value={field.value}
                             >
                               <FormControl>
                                 <SelectTrigger className="">
-                                  <SelectValue placeholder="Select wilaya" />
+                                  <SelectValue placeholder="Select state " />
                                 </SelectTrigger>
                               </FormControl>
                               <SelectContent className="">
@@ -309,7 +322,6 @@ function CompleteOrder() {
                         )}
                       />
                     </div>
-
 
                     {/* <FormField
                       control={form.control}
@@ -378,7 +390,7 @@ function CompleteOrder() {
 
                     <FormField
                       control={form.control}
-                      name="notes"
+                      name="note"
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>Order Notes (Optional)</FormLabel>
@@ -406,7 +418,7 @@ function CompleteOrder() {
                   variant="default"
                   aria-label={isSubmitting ? "Processing order" : "Place order"}
                 >
-                  {/* {isSubmitting ? (
+                  {isSubmitting ? (
                     <>
                       <Loader2
                         className="animate-spin h-4 w-4 mr-2"
@@ -417,10 +429,9 @@ function CompleteOrder() {
                   ) : (
                     <>
                       <Lock className="w-4 h-4 mr-2" aria-hidden="true" />
-                      Place Order - {grandTotal.toFixed(2)} DZ
+                      Place Order - {displayTotal.toFixed(2)} DZ
                     </>
-                  )} */}
-                  submit your order
+                  )}
                 </Button>
 
                 <p className="text-xs text-center text-muted-foreground">
@@ -483,7 +494,9 @@ function CompleteOrder() {
                     <dt className="text-muted-foreground">
                       Subtotal ({cart.length} items)
                     </dt>
-                    <dd className="font-medium">${displayTotal.toFixed(2)}</dd>
+                    <dd className="font-medium text-green-600">
+                      ${displayTotal.toFixed(2)}
+                    </dd>
                   </div>
 
                   <Separator className="" />

@@ -45,6 +45,7 @@ import hero1 from "@assets/hero1.png";
 import hero2 from "@assets/hero2.png";
 import hero3 from "@assets/hero3.png";
 import hero4 from "@assets/hero4.png";
+import { useGetAllClassificationsQuery } from "@/Redux/Services/ClassificationApi";
 
 const ITEMS_PER_PAGE = 8;
 
@@ -60,13 +61,13 @@ function AllProductsPage() {
 
   // RTK Query hooks
   const { data: productsData, isLoading } = useGetAllProductsQuery(undefined);
-  const { data: categoriesData } = useGetCategoriesQuery(undefined);
+  const { data: categoriesData } = useGetAllClassificationsQuery(undefined);
   console.log("categories" , categoriesData);
   
   const [addToCartMutation] = useAddToCartMutation();
 
-  const products = productsData?.products || [];
-  const categories = categoriesData || [];
+  const products = productsData?.content || [];
+  const categories = categoriesData?.content || [];
   
   const addToCart = useCallback((id: string) => {
     addToCartMutation(id)
@@ -188,15 +189,15 @@ function AllProductsPage() {
             <div key={category.id} className="flex items-center space-x-2">
               <Checkbox
                 id={`category-${category.id}`}
-                checked={selectedCategories.includes(category.title)}
-                onCheckedChange={() => handleCategoryToggle(category.title)}
+                checked={selectedCategories.includes(category.name)}
+                onCheckedChange={() => handleCategoryToggle(category.name)}
                 className=""
               />
               <label
                 htmlFor={`category-${category.id}`}
                 className="text-sm flex-1 cursor-pointer flex items-center justify-between"
               >
-                <span>{category.title}</span>
+                <span>{category.name}</span>
               </label>
             </div>
           ))}

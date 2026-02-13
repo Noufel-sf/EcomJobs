@@ -55,19 +55,19 @@ export const createProductColumns = ({
     cell: ({ row }) => <div className="font-medium">{row.getValue("id")}</div>,
   },
 
-  // {
-  //   accessorKey: "MainImage",
-  //   header: "MainImage",
-  //   cell: ({ row }) => (
-  //     <Image
-  //       width={48}
-  //       height={48}
-  //       className="w-12 h-12 object-cover rounded"
-  //       src={row.getValue("MainImage")}
-  //       alt="Product Image"
-  //     />
-  //   ),
-  // },
+  {
+    accessorKey: "mainImage",
+    header: "mainImage",
+    cell: ({ row }) => (
+      <Image
+        width={48}
+        height={48}
+        className="w-12 h-12 object-cover rounded"
+        src={row.getValue("mainImage")}
+        alt="Product Image"
+      />
+    ),
+  },
   {
     accessorKey: "name",
     header: "Name",
@@ -93,11 +93,11 @@ export const createProductColumns = ({
   },
 
   {
-    accessorKey: "active",
+    accessorKey: "available",
     header: "Status",
     cell: ({ row }) => {
       const product = row.original;
-      const isActive = product.active !== false;
+      const isActive = product.available !== false;
       const status = isActive ? "active" : "pending";
 
       return (
@@ -128,11 +128,11 @@ export const createProductColumns = ({
               </Badge>
             </DropdownMenuItem>
             <DropdownMenuItem
-              className={""}
+              className={"cursor-pointer"}
               inset
               onClick={() => handleStatusChange(product.id, "pending")}
             >
-              <Badge variant={""} className="bg-yellow-500/10 text-yellow-600 dark:bg-yellow-500/20 dark:text-yellow-400">
+              <Badge variant={""} className="bg-yellow-500/10 cursor-pointer text-yellow-600 dark:bg-yellow-500/20 dark:text-yellow-400">
                 Pending
               </Badge>
             </DropdownMenuItem>

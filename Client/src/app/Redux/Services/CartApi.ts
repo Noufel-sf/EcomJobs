@@ -1,14 +1,9 @@
 import { createApi, fakeBaseQuery } from "@reduxjs/toolkit/query/react";
+import type { CartItem } from "@/lib/DatabaseTypes";
+
 
 const CART_STORAGE_KEY = "ecom_cart";
 
-export interface CartItem {
-  productId: string;
-  name: string;
-  price: number;
-  image: string;
-  quantity: number;
-}
 
 interface CartState {
   items: CartItem[];

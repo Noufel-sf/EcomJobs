@@ -1,6 +1,6 @@
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000/api/v1";
+const API_URL =  "https://wadkniss.onrender.com/api/v1";
 
 // Types
 export interface User {
@@ -33,7 +33,6 @@ export const authApi = createApi({
   }),
   tagTypes: ["Auth"],
   endpoints: (builder) => ({
-    // Login mutation
     login: builder.mutation<AuthResponse, LoginRequest>({
       query: (credentials) => ({
         url: "/auth/login",

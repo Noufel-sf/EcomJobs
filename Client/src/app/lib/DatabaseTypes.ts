@@ -55,8 +55,12 @@ export interface Product {
   id: string; 
   name: string;
   price: number; 
+  status:boolean ;
   mainImage: string; 
+  extraImages: string[];
+  sizes: string[];
   smallDesc: string; 
+  colors:string[];
   bigDesc: string | null; 
   available: boolean;
   sponsored: boolean;
@@ -181,6 +185,8 @@ export interface CartItem {
   productId: string;
   quantity: number;
   price: number;
+  size?: string;
+  color?: string; 
   name: string;
   image?: string | StaticImageData;
   weight?: string;

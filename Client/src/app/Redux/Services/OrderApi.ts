@@ -1,23 +1,20 @@
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 import type { Order } from "@/lib/DatabaseTypes";
 
-const API_URL =
-  process.env.NEXT_PUBLIC_API_URL || "https://wadkniss-1.onrender.com";
+const API_URL = "https://wadkniss.onrender.com/api/v1";
 
 interface CreateOrderRequest {
   firstName: string;
   lastName: string;
   note:string ;
-  state:string ;
+  state:number ;
   city: string;
-  notes?: string;
   products: {
     product: string;
-    name: string;
     size: string;
     prodNb: number;
+    color:string ;
   }[];
-  total: number;
 }
 
 interface CreateOrderResponse {
@@ -50,7 +47,7 @@ export const orderApi = createApi({
    
     createOrder: builder.mutation<CreateOrderResponse, CreateOrderRequest>({
       query: (orderData) => ({
-        url: "/",
+        url: "",
         method: "POST",
         body: orderData,
       }),

@@ -45,12 +45,12 @@ export default function CreateProductUi({
   ownerId , 
   loading,
 }: CreateProductUiProps) {
-  // Internal state management - matching database Product schema
+
   const [name, setName] = useState("");
   const [smallDesc, setSmallDesc] = useState("");
   const [bigDesc, setBigDesc] = useState("");
   const [price, setPrice] = useState("");
-  const [classification, setClassification] = useState("");
+  const [prod_class, setProdClass] = useState("");
   const [available, setAvailable] = useState(true);
   const [mainImage, setMainImage] = useState<File | null>(null);
   const [mainImagePreview, setMainImagePreview] = useState<string | null>(null);
@@ -71,7 +71,7 @@ export default function CreateProductUi({
     setSmallDesc("");
     setBigDesc("");
     setPrice("");
-    setClassification("");
+    setProdClass("");
     setAvailable(true);
     setMainImage(null);
     setMainImagePreview(null);
@@ -85,48 +85,47 @@ export default function CreateProductUi({
   const handleCreateProduct = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
-    // const formData = new FormData();
-    // formData.append("name", name);
-    // formData.append("smallDesc", smallDesc);
-    // formData.append("bigDesc", bigDesc);
-    // formData.append("price", price);
-    // formData.append("prod_class", classification);
-    // formData.append("sizes", JSON.stringify(sizes));
-    // formData.append("colors", JSON.stringify(colors));
-    // formData.append("owner", ownerId);
+    const formData = new FormData();
+    formData.append("name", name);
+    formData.append("smallDesc", smallDesc);
+    formData.append("bigDesc", bigDesc);
+    formData.append("price", price);
+    formData.append("prod_class", prod_class);
+    formData.append("sizes", JSON.stringify(sizes));
+    formData.append("colors", JSON.stringify(colors));
+    formData.append("owner", ownerId);
 
-    // if (mainImage) {
-    //   formData.append("mainImage", mainImage);
-    // }
+    if (mainImage) {
+      formData.append("mainImage", mainImage);
+    }
 
-    // extraImages.forEach((image) => {
-    //   if (image) {
-    //     formData.append("extraImages", image);
-    //   }
-    // });
+    extraImages.forEach((image) => {
+      if (image) {
+        formData.append("extraImages", image);
+      }
+    });
 
-    // console.log("product data:");
-    // for (const [key, value] of formData.entries()) {
-    //   console.log(`  ${key}:`, value);
-    // }
+    console.log("product data:");
+    for (const [key, value] of formData.entries()) {
+      console.log(`  ${key}:`, value);
+    }
 
-    // await onSubmit(formData);
+    await onSubmit(formData);
 
-    const data = {
-      name: name,
-      smallDesc: smallDesc,
-      bigDesc: bigDesc, 
-      price: parseFloat(price),
-      prod_class: classification,
-      sizes: sizes,
-      colors: colors,
-      owner: ownerId,
-      mainImage: "dsfsdfsdfsdfsdf",
-      extraImages: ["sdfsdfsdfs" , "dsfsfsdfsdf"],
-    };
+    // const data = {
+    //   name: name,
+    //   smallDesc: smallDesc,
+    //   bigDesc: bigDesc, 
+    //   price: parseFloat(price),
+    //   prod_class: classification,
+    //   sizes: sizes,
+    //   colors: colors,
+    //   owner: ownerId,
+    //   mainImage: "dsfsdfsdfsdfsdf",
+    //   extraImages: ["sdfsdfsdfs" , "dsfsfsdfsdf"],
+    // };
 
 
-    await onSubmit(data as Product);
 
 
     resetForm();
@@ -286,7 +285,7 @@ export default function CreateProductUi({
                       setAvailable(checked === true)
                     }
                   />
-                  <Label htmlFor="available">Available</Label>
+                  <Label className={""} htmlFor="available">Available</Label>
                 </div>
                
               </div>
@@ -376,8 +375,8 @@ export default function CreateProductUi({
                       variant="outline"
                       className="w-full justify-between cursor-pointer"
                     >
-                      {classification
-                        ? categories.find((cat) => cat.id === classification)
+                      {prod_class
+                        ? categories.find((cat) => cat.id === prod_class)
                             ?.name
                         : "Select category"}
                       <ChevronDown className="ml-2 h-4 w-4 opacity-50" />
@@ -393,7 +392,7 @@ export default function CreateProductUi({
                         key={cat.id}
                         className="cursor-pointer"
                         inset={true}
-                        onClick={() => setClassification(cat.id)}
+                        onClick={() => setProdClass(cat.id)}
                       >
                         {cat.name}
                       </DropdownMenuItem>
@@ -403,7 +402,6 @@ export default function CreateProductUi({
               </div>
             </div>
 
-            {/* Right Column - Sizes */}
             <div className="space-y-4">
               <div className="grid gap-3">
                 <Label className="">Available Sizes</Label>

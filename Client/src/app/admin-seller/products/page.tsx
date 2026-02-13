@@ -74,6 +74,7 @@ export default function AdminProducts() {
   const [openCreate, setOpenCreate] = useState(false);
   const [openEdit, setOpenEdit] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+  
 
   const handleCreate = async (formData: FormData) => {
     try {
@@ -120,7 +121,7 @@ export default function AdminProducts() {
     setData((prev) =>
       prev.map((product) =>
         product.id === productId
-          ? { ...product, active: newStatus === "active" }
+          ? { ...product, available: newStatus === "active" }
           : product,
       ),
     );
@@ -128,7 +129,7 @@ export default function AdminProducts() {
     try {
       await updateProductStatus({
         id: productId,
-        active: newStatus === "active",
+        available : newStatus === "active",
       }).unwrap();
 
       toast.success("Status updated successfully");
@@ -194,7 +195,7 @@ export default function AdminProducts() {
               categories={categories}
               onSubmit={handleCreate}
               loading={isCreating}
-              ownerId={"019c4e88-0cd9-705d-8dd9-5f6f75f3257e"}
+              ownerId={"019c52df-1e7a-7006-ac12-aa2be28f77b4"}
             />
 
             <DropdownMenu>
@@ -227,7 +228,7 @@ export default function AdminProducts() {
         <UpdateProductUi
           open={openEdit}
           onOpenChange={setOpenEdit}
-          ownerId={"019c4e88-0cd9-705d-8dd9-5f6f75f3257e"}
+          ownerId={"019c52df-1e7a-7006-ac12-aa2be28f77b4"}
           categories={categories}
           initialProduct={selectedProduct}
           onSubmit={handleUpdate}

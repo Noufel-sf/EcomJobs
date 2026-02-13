@@ -1,6 +1,8 @@
 import { Product } from "@/lib/DatabaseTypes";
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 
+const API_URL = "https://wadkniss.onrender.com/api/v1";
+
 export interface GetAllProductsParams {
   page?: number;
   limit?: number;
@@ -20,7 +22,7 @@ export interface GetAllProductsResponse {
 export const productsApi = createApi({
   reducerPath: "productsApi",
   baseQuery: fetchBaseQuery({
-    baseUrl:  "https://wadkniss-1.onrender.com/api/v1/products",
+    baseUrl:   `${API_URL}/products`,
     // credentials: "include",
   }),
 
@@ -48,7 +50,7 @@ export const productsApi = createApi({
       providesTags: ["Products"],
     }),
 
-    getProductById: builder.query({
+    getProductById: builder.query<Product, string>({
       query: (id) => `/${id}`,
       providesTags: (result, error, id) => [{ type: "Product", id }],
     }),
@@ -60,11 +62,11 @@ export const productsApi = createApi({
 
 
     searchProducts: builder.query({
-      query: ({ query, category, minPrice, maxPrice, page, limit }) => ({
+      query: ({ query, prod_class, minPrice, maxPrice, page, limit }) => ({
         url: "/search",
         params: {
           q: query,
-          ...(category && { category }),
+          ...(prod_class && { prod_class }),
           ...(minPrice && { minPrice }),
           ...(maxPrice && { maxPrice }),
           ...(page && { page }),
@@ -74,11 +76,6 @@ export const productsApi = createApi({
       providesTags: ["Products"],
     }),
 
-    getCategories: builder.query({
-      query: () => "/category",
-      transformResponse: (response) => response?.categories || [],
-      providesTags: ["Categories"],
-    }),
 
     createProduct: builder.mutation({
       query: (formData) => ({
@@ -110,10 +107,10 @@ export const productsApi = createApi({
     }),
 
     updateProductStatus: builder.mutation({
-      query: ({ id, active }) => ({
-        url: `/${id}`,
+      query: ({ id, available }) => ({
+        url: `/status/${id}`,
         method: "PUT",
-        body: { active },
+        body: { status : available },
       }),
       invalidatesTags: ["Products"],
     }),
@@ -127,7 +124,6 @@ export const {
   useGetSellerProductsQuery,
   useSearchProductsQuery,
   useLazySearchProductsQuery,
-  useGetCategoriesQuery,
   useCreateProductMutation,
   useUpdateProductMutation,
   useDeleteProductMutation,

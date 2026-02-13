@@ -18,11 +18,11 @@ import {
 } from "lucide-react";
 import SingleProductSkeleton from "@/components/SingleProductSkeleton";
 import { useAddToCartMutation } from "@/Redux/Services/CartApi";
+import { shopOwnerInfo } from "@/lib/data";
 import { useGetProductByIdQuery } from "@/Redux/Services/ProductsApi";
-import { productThumbnails, shopOwnerInfo } from "@/lib/data";
 import { Swiper, SwiperSlide } from "swiper/react";
 import Image from "next/image";
-import { Autoplay, Navigation, Thumbs, Zoom } from "swiper/modules";
+import { Autoplay, Navigation, Thumbs } from "swiper/modules";
 import "swiper/css";
 import toast from "react-hot-toast";
 
@@ -35,23 +35,32 @@ type SwiperInstance = any;
 
 const SingleProduct = () => {
   const { id } = useParams();
+  console.log("product id from params", id);
+
   const [selectedSize, setSelectedSize] = useState<string>("");
   const [selectedColor, setSelectedColor] = useState<string>("");
   const [thumbsSwiper, setThumbsSwiper] = useState<SwiperInstance>(null);
   const [addToCart] = useAddToCartMutation();
 
-  const { data: singleProduct, isLoading, isError } = useGetProductByIdQuery(id as string, {
+  const {
+    data: singleProduct,
+    isLoading,
+    isError,
+  } = useGetProductByIdQuery(id as string, {
     skip: !id,
   });
+  console.log(singleProduct, "single product data");
 
   const handleAddToCart = useCallback(() => {
     if (!singleProduct) return;
-    
+
     addToCart({
       productId: singleProduct.id,
+      color: selectedColor,
       name: singleProduct.name,
       price: singleProduct.price,
-      image: singleProduct.main_img || productThumbnails[0],
+      size: selectedSize,
+      image: singleProduct.mainImage,
       quantity: 1,
     })
       .unwrap()
@@ -61,7 +70,11 @@ const SingleProduct = () => {
       .catch((error: any) => {
         toast.error(error?.data?.message || "Failed to add to cart");
       });
-  }, [singleProduct, addToCart]);
+  }, [singleProduct, addToCart, selectedSize, selectedColor]);
+
+  const productImages = singleProduct
+    ? [singleProduct.mainImage, ...(singleProduct.extraImages ?? [])]
+    : [];
 
   if (isError) {
     return (
@@ -156,7 +169,7 @@ const SingleProduct = () => {
                 nextSlideMessage: "View next product image",
               }}
             >
-              {productThumbnails.map((img, idx) => (
+              {productImages.map((img, idx) => (
                 <SwiperSlide key={`main-image-${idx}`}>
                   <Card className="flex items-center justify-center h-full p-8">
                     <Image
@@ -199,7 +212,7 @@ const SingleProduct = () => {
             role="group"
             aria-label="Product thumbnail images"
           >
-            {productThumbnails.map((img, idx) => (
+            {productImages.map((img: string, idx: number) => (
               <SwiperSlide key={`thumbnail-${idx}`}>
                 <Card className="cursor-pointer h-24 flex items-center justify-center p-2 hover:border-purple-500 transition focus-within:ring-2 focus-within:ring-purple-500">
                   <Image
@@ -226,76 +239,75 @@ const SingleProduct = () => {
                 "Lorem ipsum dolor sit amet, consectetur adipiscing elit Lorem ipsum dolor sit amet, consectetur adipiscing elit  Lorem ipsum dolor sit amet, consectetur adipiscing elit  Lorem ipsum dolor sit amet, consectetur adipiscing elit ."}{" "}
             </p>
           </div>
-          {/* Weight */}
-          {singleProduct?.weight && (
-            <div className="space-y-2 ">
-              <h3 className="text-sm font-semibold">Weight</h3>
-              <Badge variant="outline" className="text-sm bg-muted/50 text-foreground border-transparent px-3 py-1">
-                {singleProduct.weight}
-              </Badge>
-            </div>
-          )}
+       
 
           {/* Size Selector */}
           {/* {(singleProduct?.category === "Clothing" ||
             singleProduct?.category === "Shoes" ||
             singleProduct?.sizes) && ( */}
-          <div className="space-y-3">
-            <h3 className="text-sm font-semibold">Select Size</h3>
-            <fieldset aria-label="Select product size">
-              <legend className="sr-only">Available sizes</legend>
-              <div className="flex flex-wrap gap-2">
-                {(
-                  singleProduct?.sizes || ["XS", "S", "M", "L", "XL", "XXL"]
-                ).map((size: string) => (
-                  <button
-                    key={size}
-                    type="button"
-                    onClick={() => setSelectedSize(size)}
-                    className={`px-4 py-2  rounded-md cursor-pointer font-medium transition-all focus:outline-none focus:ring-2 focus:ring-primary ${
-                      selectedSize === size
-                        ? "border-primary bg-primary text-white"
-                        : "bg-muted hover:bg-muted/50 text-foreground border-transparent"
-                    }`}
-                    aria-pressed={selectedSize === size}
-                    aria-label={`Size ${size}`}
-                  >
-                    {size}
-                  </button>
-                ))}
-              </div>
-            </fieldset>
-          </div>
-          {/* )} */}
+          {singleProduct?.sizes?.length ? (
+            <div className="space-y-3">
+              <h3 className="text-sm font-semibold">Select Size</h3>
+              <fieldset aria-label="Select product size">
+                <legend className="sr-only">Available sizes</legend>
+                <div className="flex flex-wrap gap-2">
+                  {singleProduct.sizes.map((size: string) => (
+                    <button
+                      key={size}
+                      type="button"
+                      onClick={() => setSelectedSize(size)}
+                      className={`px-4 py-2 cursor-pointer rounded-md font-medium transition-all focus:outline-none focus:ring-2 focus:ring-primary ${
+                        selectedSize === size
+                          ? "border-primary bg-primary text-white"
+                          : "bg-muted hover:bg-muted/50 text-foreground border-transparent"
+                      }`}
+                      aria-pressed={selectedSize === size}
+                    >
+                      {size}
+                    </button>
+                  ))}
+                </div>
+              </fieldset>
+            </div>
+          ) : (
+            <p className="text-sm text-muted-foreground">No sizes available</p>
+          )}
 
           {/* Color Selector */}
-          {singleProduct?.colors && singleProduct.colors.length > 0 && (
+          {singleProduct?.colors?.length ? (
             <div className="space-y-3">
               <h3 className="text-sm font-semibold">
-                Select Color {selectedColor && <span className="font-normal text-muted-foreground">- {singleProduct.colors.find(c => c.hex === selectedColor)?.name}</span>}
+                Select Color{" "}
+                {selectedColor && (
+                  <span className="font-normal text-muted-foreground">
+                    - {selectedColor}
+                  </span>
+                )}
               </h3>
+
               <fieldset aria-label="Select product color">
                 <legend className="sr-only">Available colors</legend>
                 <div className="flex flex-wrap gap-3">
-                  {singleProduct.colors.map((color: { name: string; hex: string }) => (
+                  {singleProduct.colors.map((color: string) => (
                     <button
-                      key={color.hex}
+                      key={color}
                       type="button"
-                      onClick={() => setSelectedColor(color.hex)}
-                      className={`w-10 h-10 rounded-full cursor-pointer transition-all focus:outline-none focus:ring-2  ${
-                        selectedColor === color.hex
-                          ? "ring-2  scale-110"
+                      onClick={() => setSelectedColor(color)}
+                      className={`w-10 h-10 rounded-full transition-all focus:outline-none focus:ring-2 cursor-pointer ${
+                        selectedColor === color
+                          ? "ring-2 scale-110"
                           : "hover:scale-105"
                       }`}
-                      style={{ backgroundColor: color.hex }}
-                      aria-pressed={selectedColor === color.hex}
-                      aria-label={`Color ${color.name}`}
-                      title={color.name}
+                      style={{ backgroundColor: color }}
+                      aria-pressed={selectedColor === color}
+                      aria-label={`Color ${color}`}
                     />
                   ))}
                 </div>
               </fieldset>
             </div>
+          ) : (
+            <p className="text-sm text-muted-foreground">No colors available</p>
           )}
 
           {/* Price */}
@@ -306,7 +318,6 @@ const SingleProduct = () => {
             >
               ${singleProduct?.price}
             </span>
-           
           </div>
 
           <Separator className="" />
@@ -383,11 +394,11 @@ const SingleProduct = () => {
                 Add to Cart
               </Button>
 
-              <Link href="/complete-order" className="flex-1">
+              <Link href="/completeorder" className="flex-1">
                 <Button
                   size="lg"
                   variant="secondary"
-                  className="flex-1 text-base font-semibold"
+                  className="flex-1 w-full text-base font-semibold"
                   type="button"
                   aria-label="Buy product now"
                 >
@@ -398,8 +409,6 @@ const SingleProduct = () => {
           </div>
         </section>
       </div>
-
-      {/* Reviews Section */}
     </main>
   );
 };

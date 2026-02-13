@@ -59,7 +59,7 @@ export default function UpdateProductUi({
   const [smallDesc, setSmallDesc] = useState('');
   const [bigDesc, setBigDesc] = useState('');
   const [price, setPrice] = useState('');
-  const [classification, setClassification] = useState('');
+  const [prod_class, setProdClass] = useState('');
   const [available, setAvailable] = useState(true);
 
   const [sizes, setSizes] = useState<string[]>([]);
@@ -82,7 +82,7 @@ export default function UpdateProductUi({
       setSmallDesc(initialProduct.smallDesc ?? '');
       setBigDesc(initialProduct.bigDesc ?? '');
       setPrice(initialProduct.price ? String(initialProduct.price) : '');
-      setClassification(initialProduct.prod_class ?? '');
+      setProdClass(initialProduct.prod_class ?? '');
       setAvailable(initialProduct.available ?? true);
       setSizes(initialProduct.sizes ?? []);
       setColors(initialProduct.colors ?? []);
@@ -90,15 +90,13 @@ export default function UpdateProductUi({
       setCurrentExtraImages(initialProduct.extraImages ?? []);
     }
   }, [open, initialProduct]);
-
-
   
   const resetForm = () => {
     setName('');
     setSmallDesc('');
     setBigDesc('');
     setPrice('');
-    setClassification('');
+    setProdClass('');
     setAvailable(true);
     setMainImage(null);
     setMainImagePreview(null);
@@ -116,45 +114,49 @@ export default function UpdateProductUi({
     
     if (!initialProduct?.id) return;
     
-    // const formData = new FormData();
-    // formData.append('name', name);
-    // formData.append('small_desc', smallDesc);
-    // formData.append('big_desc', bigDesc);
-    // formData.append('price', price);
-    // formData.append('classification', classification);
-    // formData.append('available', String(available));
-    // formData.append('sizes', JSON.stringify(sizes));
-    // formData.append('colors', JSON.stringify(colors));
-    
-    // if (mainImage) {
-    //   formData.append('main_img', mainImage);
-    // }
-    
-    // extraImages.forEach((image) => {
-    //   if (image) {
-    //     formData.append('extra_images', image);
-    //   }
-    // });
+    const formData = new FormData();
+    formData.append('name', name);
+    formData.append('smallDesc', smallDesc);
+    formData.append('bigDesc', bigDesc);
+    formData.append('price', price);
+    formData.append('prod_class', prod_class);
+    formData.append('available', String(available));
+    formData.append('sizes', JSON.stringify(sizes));
+    formData.append('colors', JSON.stringify(colors));
+    formData.append('owner', ownerId);
 
-    // // Debug: Log FormData contents properly
-    // console.log("product data:");
-    // for (const [key, value] of formData.entries()) {
-    //   console.log(`  ${key}:`, value);
-    // }
     
-      const data = {
-      name: name,
-      smallDesc: smallDesc,
-      bigDesc: bigDesc, 
-      price: parseFloat(price),
-      prod_class: classification,
-      sizes: sizes,
-      colors: colors,
-      owner: ownerId,
-      mainImage: "dsfsdfsdfsdfsdf",
-      extraImages: ["sdfsdfsdfs" , "dsfsfsdfsdf"],
-    };
-    await onSubmit(initialProduct.id, data);
+    if (mainImage) {
+      formData.append('mainImage', mainImage);
+    }
+    
+    extraImages.forEach((image) => {
+      if (image) {
+        formData.append('extraImages', image);
+      }
+    });
+
+    // Debug: Log FormData contents properly
+    console.log("product data:");
+    for (const [key, value] of formData.entries()) {
+      console.log(`  ${key}:`, value);
+    }
+    
+    //   const data = {
+    //   name: name,
+    //   smallDesc: smallDesc,
+    //   bigDesc: bigDesc, 
+    //   price: parseFloat(price),
+    //   prod_class: classification,
+    //   sizes: sizes,
+    //   colors: colors,
+    //   owner: ownerId,
+    //   mainImage: "dsfsdfsdfsdfsdf",
+    //   extraImages: ["sdfsdfsdfs" , "dsfsfsdfsdf"],
+    // };
+
+
+    await onSubmit(initialProduct.id, formData);
   };
 
   const handleOpenChange = (isOpen: boolean) => {
@@ -300,7 +302,7 @@ export default function UpdateProductUi({
               
               </div>
 
-              {/* <div className="grid gap-3">
+              <div className="grid gap-3">
                 <Label className={""} htmlFor="mainImage">Main Product Image</Label>
                 <Input
                   id="mainImage"
@@ -389,7 +391,7 @@ export default function UpdateProductUi({
                     </div>
                   ))}
                 </div>
-              </div> */}
+              </div>
 
               {/* Classification/Category */}
               <div className="grid gap-3">
@@ -397,8 +399,8 @@ export default function UpdateProductUi({
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button size="sm" variant="outline" className="w-full justify-between cursor-pointer">
-                      {classification
-                        ? categories.find((cat) => cat.id === classification)?.name
+                      {prod_class
+                        ? categories.find((cat) => cat.id === prod_class)?.name
                         : "Select category"}
                       <ChevronDown className="ml-2 h-4 w-4 opacity-50" />
                     </Button>
@@ -411,7 +413,7 @@ export default function UpdateProductUi({
                         key={cat.id}
                         inset
                         className="cursor-pointer"
-                        onClick={() => setClassification(cat.id)}
+                        onClick={() => setProdClass(cat.id)}
                       >
                         {cat.name}
                       </DropdownMenuItem>

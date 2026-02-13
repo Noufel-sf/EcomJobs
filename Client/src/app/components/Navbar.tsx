@@ -146,7 +146,7 @@ const Navbar = memo(function Navbar() {
                     role="option"
                   >
                     <Image
-                      src={product.image}
+                      src={product.mainImage}
                       alt=""
                       className="w-10 h-10 object-contain"
                       width={40}
