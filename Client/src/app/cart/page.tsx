@@ -94,10 +94,10 @@ function CartPage() {
           className="text-sm text-muted-foreground mb-6 flex items-center gap-2"
           aria-label="Breadcrumb"
         >
+          <Link href="/allproducts" className="hover:underline">
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => router.push("/allproducts")}
             className="gap-1"
             type="button"
             aria-label="Continue shopping"
@@ -105,6 +105,7 @@ function CartPage() {
             <ArrowLeft className="w-4 h-4" aria-hidden="true" />
             Continue Shopping
           </Button>
+          </Link>
         </nav>
 
         {/* Header */}
@@ -174,8 +175,8 @@ function CartPage() {
                 <p className="text-muted-foreground mb-6">
                   Looks like you haven&apos;t added anything to your cart yet
                 </p>
+                <Link href="/products" className="w-full">
                 <Button
-                  onClick={() => router.push("/allproducts")}
                   size="lg"
                   variant=""
                   className=""
@@ -184,6 +185,7 @@ function CartPage() {
                   Start Shopping
                   <ArrowRight className="ml-2 w-4 h-4" aria-hidden="true" />
                 </Button>
+                </Link>
               </Card>
             )}
           </section>

@@ -26,7 +26,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Plus, X, ChevronDown } from "lucide-react";
 import Image from "next/image";
-import type { Categorie , Product } from "@/lib/DatabaseTypes";
+import type { Categorie, Product } from "@/lib/DatabaseTypes";
 
 interface CreateProductUiProps {
   open: boolean;
@@ -42,10 +42,9 @@ export default function CreateProductUi({
   onOpenChange,
   categories,
   onSubmit,
-  ownerId , 
+  ownerId,
   loading,
 }: CreateProductUiProps) {
-
   const [name, setName] = useState("");
   const [smallDesc, setSmallDesc] = useState("");
   const [bigDesc, setBigDesc] = useState("");
@@ -91,9 +90,15 @@ export default function CreateProductUi({
     formData.append("bigDesc", bigDesc);
     formData.append("price", price);
     formData.append("prod_class", prod_class);
-    formData.append("sizes", JSON.stringify(sizes));
-    formData.append("colors", JSON.stringify(colors));
     formData.append("owner", ownerId);
+
+    sizes.forEach((size) => {
+      formData.append("sizes", size);
+    });
+
+    colors.forEach((color) => {
+      formData.append("colors", color);
+    });
 
     if (mainImage) {
       formData.append("mainImage", mainImage);
@@ -111,22 +116,6 @@ export default function CreateProductUi({
     }
 
     await onSubmit(formData);
-
-    // const data = {
-    //   name: name,
-    //   smallDesc: smallDesc,
-    //   bigDesc: bigDesc, 
-    //   price: parseFloat(price),
-    //   prod_class: classification,
-    //   sizes: sizes,
-    //   colors: colors,
-    //   owner: ownerId,
-    //   mainImage: "dsfsdfsdfsdfsdf",
-    //   extraImages: ["sdfsdfsdfs" , "dsfsfsdfsdf"],
-    // };
-
-
-
 
     resetForm();
   };
@@ -224,7 +213,9 @@ export default function CreateProductUi({
             {/* Left Column - Main Info */}
             <div className="md:col-span-2 space-y-4">
               <div className="grid gap-3">
-                <Label className="" htmlFor="name">Name</Label>
+                <Label className="" htmlFor="name">
+                  Name
+                </Label>
                 <Input
                   id="name"
                   value={name}
@@ -235,7 +226,9 @@ export default function CreateProductUi({
                 />
               </div>
               <div className="grid gap-3">
-                <Label className="" htmlFor="smallDesc">Short Description</Label>
+                <Label className="" htmlFor="smallDesc">
+                  Short Description
+                </Label>
                 <Input
                   id="smallDesc"
                   value={smallDesc}
@@ -247,7 +240,9 @@ export default function CreateProductUi({
                 />
               </div>
               <div className="grid gap-3">
-                <Label className="" htmlFor="bigDesc">Full Description</Label>
+                <Label className="" htmlFor="bigDesc">
+                  Full Description
+                </Label>
                 <textarea
                   id="bigDesc"
                   value={bigDesc}
@@ -260,7 +255,9 @@ export default function CreateProductUi({
                 />
               </div>
               <div className="grid gap-3">
-                <Label className="" htmlFor="price">Price</Label>
+                <Label className="" htmlFor="price">
+                  Price
+                </Label>
                 <Input
                   className={""}
                   id="price"
@@ -285,14 +282,17 @@ export default function CreateProductUi({
                       setAvailable(checked === true)
                     }
                   />
-                  <Label className={""} htmlFor="available">Available</Label>
+                  <Label className={""} htmlFor="available">
+                    Available
+                  </Label>
                 </div>
-               
               </div>
 
               {/* Main Image */}
               <div className="grid gap-3">
-                <Label className="" htmlFor="mainImage">Main Product Image</Label>
+                <Label className="" htmlFor="mainImage">
+                  Main Product Image
+                </Label>
                 <Input
                   id="mainImage"
                   type="file"
@@ -376,8 +376,7 @@ export default function CreateProductUi({
                       className="w-full justify-between cursor-pointer"
                     >
                       {prod_class
-                        ? categories.find((cat) => cat.id === prod_class)
-                            ?.name
+                        ? categories.find((cat) => cat.id === prod_class)?.name
                         : "Select category"}
                       <ChevronDown className="ml-2 h-4 w-4 opacity-50" />
                     </Button>
@@ -565,7 +564,12 @@ export default function CreateProductUi({
             {loading ? (
               <ButtonLoading />
             ) : (
-              <Button size="lg" className="cursor-pointer" variant="primary" type="submit">
+              <Button
+                size="lg"
+                className="cursor-pointer"
+                variant="primary"
+                type="submit"
+              >
                 Save changes
               </Button>
             )}

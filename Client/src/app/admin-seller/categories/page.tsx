@@ -103,8 +103,8 @@ export default function AdminCategories() {
       setOpen(false);
       setTitle("");
       setDescription("");
-    } catch (error: any) {
-      toast.error(error?.data?.message || "Failed to create category");
+    } catch (error: unknown) {
+      toast.error((error)?.data?.message);
     }
   };
 
@@ -159,11 +159,6 @@ export default function AdminCategories() {
       header: ({ table }) => (
         <Checkbox
           className="cursor-pointer"
-          checked={
-            table.getIsAllPageRowsSelected() ||
-            (table.getIsSomePageRowsSelected() && "indeterminate")
-          }
-          onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
           aria-label="Select all"
         />
       ),
@@ -178,13 +173,7 @@ export default function AdminCategories() {
       enableSorting: false,
       enableHiding: false,
     },
-    {
-      accessorKey: "id",
-      header: "ID",
-      cell: ({ row }) => (
-        <div className="font-medium">{row.getValue("id")}</div>
-      ),
-    },
+   
     {
       accessorKey: "name",
       header: "Name",

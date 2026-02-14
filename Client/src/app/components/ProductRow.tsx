@@ -24,36 +24,7 @@ export const createProductColumns = ({
   handleDelete,
   onEdit,
 }: CreateProductColumnsProps) => [
- 
-  {
-    id: "select",
-    header: ({ table }) => (
-      <Checkbox
-        className="cursor-pointer"
-        checked={
-          table.getIsAllPageRowsSelected() ||
-          (table.getIsSomePageRowsSelected() && "indeterminate")
-        }
-        onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
-        aria-label="Select all"
-      />
-    ),
-    cell: ({ row }) => (
-      <Checkbox
-        className="cursor-pointer"
-        checked={row.getIsSelected()}
-        onCheckedChange={(value) => row.toggleSelected(!!value)}
-        aria-label="Select row"
-      />
-    ),
-    enableSorting: false,
-    enableHiding: false,
-  },
-  {
-    accessorKey: "id",
-    header: "ID",
-    cell: ({ row }) => <div className="font-medium">{row.getValue("id")}</div>,
-  },
+  
 
   {
     accessorKey: "mainImage",
@@ -86,7 +57,7 @@ export const createProductColumns = ({
     accessorKey: "price",
     header: "Price",
     cell: ({ row }) => (
-      <div className="text-sm text-primary font-semibold">
+      <div className="text-sm text-green-600 font-semibold">
         {row.getValue("price")}
       </div>
     ),

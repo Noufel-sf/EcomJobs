@@ -1,12 +1,13 @@
 import { Product } from "@/lib/DatabaseTypes";
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
+import { ALargeSmall } from "lucide-react";
 
 const API_URL = "https://wadkniss.onrender.com/api/v1";
 
 export interface GetAllProductsParams {
   page?: number;
-  limit?: number;
-  category?: string;
+  size?: number;
+  prod_class?: string;
   minPrice?: number;
   maxPrice?: number;
 }
@@ -15,7 +16,7 @@ export interface GetAllProductsResponse {
   content: Product[];
   totalProducts: number;
   page: number;
-  limit: number;
+  size: number;
   totalPages: number;
 }
 
@@ -31,13 +32,13 @@ export const productsApi = createApi({
   endpoints: (builder) => ({
     
     
-    getAllProducts: builder.query<GetAllProductsResponse, GetAllProductsParams | void>({
+    getAllProducts: builder.query<GetAllProductsResponse, GetAllProductsParams | void> ({
       query: (params) => ({
         url: "",
         params: params ? {
           ...(params.page && { page: params.page }),
-          ...(params.limit && { limit: params.limit }),
-          ...(params.category && { category: params.category }),
+          ...(params.size && { size: params.size }),
+          ...(params.prod_class && { prod_class: params.prod_class }),
           ...(params.minPrice && { minPrice: params.minPrice }),
           ...(params.maxPrice && { maxPrice: params.maxPrice }),
         } : undefined,
@@ -62,11 +63,13 @@ export const productsApi = createApi({
 
 
     searchProducts: builder.query({
-      query: ({ query, prod_class, minPrice, maxPrice, page, limit }) => ({
+      query: ({ query, name, smallDesc, prod_class, minPrice, maxPrice, page, limit }) => ({
         url: "/search",
         params: {
-          q: query,
+          query: query,
           ...(prod_class && { prod_class }),
+          ...(name && { name }),
+          ...(smallDesc && { smallDesc }),
           ...(minPrice && { minPrice }),
           ...(maxPrice && { maxPrice }),
           ...(page && { page }),

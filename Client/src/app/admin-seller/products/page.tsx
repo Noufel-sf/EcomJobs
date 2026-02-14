@@ -59,6 +59,7 @@ export default function AdminProducts() {
 
   const [data, setData] = useState<Product[]>([]);
   const { data: productsData, isLoading } = useGetAllProductsQuery(undefined);
+  console.log("data" , productsData);
   const products = productsData?.content || [];
   console.log("products" , products);
   
@@ -83,7 +84,7 @@ export default function AdminProducts() {
       toast.success("Product created successfully");
       setOpenCreate(false);
     } catch (error: any) {
-      toast.error(error?.data?.message || "Failed to create product");
+      toast.error(error?.data?.message);
     }
   };
 

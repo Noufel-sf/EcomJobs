@@ -40,21 +40,21 @@ import type { Order } from "@/lib/DatabaseTypes";
 
 export default function AdminAllOrders() {
 
-  const { data: ordersData, isLoading: ordersLoading } = useGetSellerOrdersQuery();
+  const { data: ordersData, isLoading: ordersLoading } = useGetSellerOrdersQuery({Seller_id: "019c52df-1e7a-7006-ac12-aa2be28f77b4", size: 10});
   const orders = ordersData?.content || [];
   const [deleteOrderMutation] = useDeleteOrderMutation();
   const [updateOrderStatus] = useUpdateOrderStatusMutation();
 
 
-  const [data, setData] = useState<Order[]>(orders);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+  const [data, setData] = useState<Order[]>(orders);
   const [dialogOpen, setDialogOpen] = useState(false);
 
   
 
   const handleStatusChange = async (orderId: string, newStatus: string) => {
 
-    const previousData = [...data];
+    const previousData = [...orders ];
     setData(prevData => 
       prevData.map(order => 
         order.id === orderId ? { ...order, status: newStatus } : order
@@ -62,10 +62,9 @@ export default function AdminAllOrders() {
     );
     
     try {
-      await updateOrderStatus({ orderId: String(orderId), status: newStatus }).unwrap();
+      await updateOrderStatus({ orderId: orderId, status: newStatus }).unwrap();
       toast.success("Order status updated successfully");
     } catch (error: any) {
-      // Revert on error
       setData(previousData);
       toast.error(error?.data?.message || "Failed to update status");
     }
@@ -81,64 +80,83 @@ export default function AdminAllOrders() {
       toast.error(error?.data?.message || "Failed to delete order");
     }
   }
-
+ 
   const exportToExcel = () => {
-    try {
-      // Prepare data for export
-      const exportData = data.map(order => ({
-        'Order ID': order.id,
-        'Customer Name': order.user?.name || 'N/A',
-        'Customer Phone': order.user?.phone || 'N/A',
-        'Total Price': `$${order.totalPrice.toFixed(2)}`,
-        'Status': order.status.charAt(0).toUpperCase() + order.status.slice(1),
-        'Order Date': new Date(order.createdAt).toLocaleString('en-US', {
-          year: 'numeric',
-          month: 'short',
-          day: 'numeric',
-          hour: '2-digit',
-          minute: '2-digit'
-        }),
-        'Items Count': order.orderItems?.length || 0,
-        'Products': order.orderItems?.map(item => 
-          `${item.product?.name || 'Unknown'} (x${item.quantity})`
-        ).join(', ') || 'N/A'
-      }));
+  try {
+    if (!orders || orders.length === 0) {
+      toast.error("No data to export");
+      return;
+    }
 
-      // Convert to CSV
-      if (!exportData || exportData.length === 0) {
-        toast.error('No data to export');
-        return;
-      }
-      const headers = Object.keys(exportData[0] as any);
-      const csvContent = [
-        headers.join(','),
-        ...exportData.map((row: any) => 
-          headers.map(header => {
+    const exportData = orders.map((order) => ({
+      "Order ID": order.id,
+      "Customer First Name": order.firstName || "N/A",
+      "Customer Last Name": order.lastName || "N/A",
+      "Phone Number": order.phoneNumber || "N/A",
+      "State": order.state || "N/A",
+      "City": order.city || "N/A",
+
+      "Products Count": order.products?.length || 0,
+
+      "Products": order.products
+        ?.map(
+          (item: any) =>
+            `${item.product?.name || "Unknown"} (x${item.prodNb}) - Size: ${
+              item.size || "-"
+            } - Color: ${item.color || "-"}`
+        )
+        .join(" | ") || "N/A",
+
+      "Products Cost": `${order.productsCost?.toFixed(2) || "0.00"} DA`,
+      "Delivery Cost": `${order.deliveryCost?.toFixed(2) || "0.00"} DA`,
+      "Total Cost": `${order.totalCost?.toFixed(2) || "0.00"} DA`,
+
+      "Status":
+        order.status?.charAt(0).toUpperCase() +
+          order.status?.slice(1).toLowerCase() || "N/A",
+    }));
+
+    const headers = Object.keys(exportData[0]);
+
+    const csvContent = [
+      headers.join(","),
+      ...exportData.map((row: any) =>
+        headers
+          .map((header) => {
             const value = row[header];
-            // Escape commas and quotes
-            return typeof value === 'string' && (value.includes(',') || value.includes('"'))
+
+            return typeof value === "string" &&
+              (value.includes(",") || value.includes('"'))
               ? `"${value.replace(/"/g, '""')}"`
               : value;
-          }).join(',')
-        )
-      ].join('\n');
+          })
+          .join(",")
+      ),
+    ].join("\n");
 
-      // Create blob and download
-      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-      const link = document.createElement('a');
-      const url = URL.createObjectURL(blob);
-      link.setAttribute('href', url);
-      link.setAttribute('download', `orders_export_${new Date().toISOString().split('T')[0]}.csv`);
-      link.style.visibility = 'hidden';
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      
-      toast.success('Orders exported successfully!');
-    } catch (error) {
-      toast.error('Failed to export orders');
-      console.error('Export error:', error);
-    }
+    const blob = new Blob([csvContent], {
+      type: "text/csv;charset=utf-8;",
+    });
+
+    const link = document.createElement("a");
+    const url = URL.createObjectURL(blob);
+
+    link.setAttribute("href", url);
+    link.setAttribute(
+      "download",
+      `orders_export_${new Date().toISOString().split("T")[0]}.csv`
+    );
+
+    link.style.visibility = "hidden";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    toast.success("Orders exported successfully!");
+  } catch (error) {
+    toast.error("Failed to export orders");
+    console.error("Export error:", error);
+  }
   };
 
 
@@ -155,7 +173,7 @@ export default function AdminAllOrders() {
   });
 
   const table = useReactTable({
-    data,
+    data:orders,
     columns,
     getCoreRowModel: getCoreRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
@@ -183,10 +201,10 @@ export default function AdminAllOrders() {
         <div className="flex items-center justify-between py-4">
           <Input
             type="text"
-            placeholder="Search By Username.."
-            value={table.getColumn("userName")?.getFilterValue() ?? ""}
+            placeholder="Search By First Name.."
+            value={table.getColumn("firstName")?.getFilterValue() ?? ""}
             onChange={(event: any) =>
-              table.getColumn("userName")?.setFilterValue(event.target.value)
+              table.getColumn("firstName")?.setFilterValue(event.target.value)
             }
             className="max-w-sm"
           />

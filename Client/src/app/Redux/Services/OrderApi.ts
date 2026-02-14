@@ -25,11 +25,11 @@ interface CreateOrderResponse {
 interface GetSellerOrdersParams {
   Seller_id?: string;
   page?: number;
-  limit?: number;
+  size?: number;
 }
 
 interface GetSellerOrdersResponse {
-  orders: Order[];
+  content: Order[];
   totalPages: number;
   currentPage: number;
   totalOrders: number;
@@ -59,11 +59,10 @@ export const orderApi = createApi({
       GetSellerOrdersParams | void
     >({
       query: (params) => ({
-        url: "/",
+        url: `/${params?.Seller_id}`,
         params: {
-          Seller_id: params?.Seller_id,
-          page: params?.page ?? 1,
-          limit: params?.limit ?? 10,
+          page: params?.page ?? 0,
+          size: params?.size ?? 10,
         },
       }),
       providesTags: ["Orders"],
@@ -82,8 +81,8 @@ export const orderApi = createApi({
       { orderId: string; status: string }
     >({
       query: ({ orderId, status }) => ({
-        url: `/${orderId}/status`,
-        method: "PATCH",
+        url: `/${orderId}`,
+        method: "PUT",
         body: { status },
       }),
       invalidatesTags: ["Orders"],

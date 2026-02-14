@@ -43,24 +43,17 @@ export const ProductCard = memo(function ProductCard({
             loading="lazy"
             sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
           />
-
-          {/* {typeof product.discountPercent === "number" && (
-            <Badge
-              variant="destructive"
-              className="absolute top-2 right-2 text-xs font-semibold"
-            >
-              %{product.discountPercent}
-            </Badge>
-          )} */}
         </CardHeader>
 
         <CardContent className="p-4 space-y-1">
 
-         
-
-          <h3 className="text-sm font-medium line-clamp-2 min-h-[40px]">
+        
+          <h3 className="text-sm font-medium line-clamp-2">
             {product.name}
           </h3>
+          <p className="text-gray-500 truncate text-sm">
+            {product.smallDesc}
+          </p>
 
           <div className="flex items-center">
             <span className="text-lg font-bold text-primary">
@@ -71,16 +64,17 @@ export const ProductCard = memo(function ProductCard({
         </CardContent>
       </Link>
 
-      <div className="px-4 flex items-center gap-2">
+      <div className="px-4 flex items-center w-full  gap-2">
+        <Link href={`/productdetails/${product.id}`} className="w-full">
         <Button
           variant="default"
           size="sm"
-          className="flex-1 bg-primary hover:bg-primary/20"
-          // onClick={handleAddToCart}
+          className="flex-1 bg-primary w-full hover:bg-primary/20"
           disabled={false}
         >
          view details
         </Button>
+        </Link>
 
 
       </div>

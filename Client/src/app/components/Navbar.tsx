@@ -67,7 +67,7 @@ const Navbar = memo(function Navbar() {
   const [searchTerm, setSearchTerm] = useState("");
   const [searchOpen, setSearchOpen] = useState(false);
   
-  const searchResults = searchData?.products || [];
+  const searchResults = searchData?.content || [];
   const totalItems = cartData?.totalItems || 0;
   
   
@@ -137,7 +137,7 @@ const Navbar = memo(function Navbar() {
                 searchResults.map((product : Product) => (
                   <Link
                     key={product.id}
-                    href={`/product/${product.id}`}
+                    href={`/productdetails/${product.id}`}
                     className="flex items-center gap-3 px-4 py-2 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
                     onClick={() => {
                       setSearchTerm("");

@@ -234,12 +234,11 @@ const SingleProduct = () => {
             <h1 className="text-3xl lg:text-4xl font-bold mb-3 leading-tight">
               {singleProduct?.name}
             </h1>
-            <p className="text-muted-foreground">
-              {singleProduct?.bigDesc ||
-                "Lorem ipsum dolor sit amet, consectetur adipiscing elit Lorem ipsum dolor sit amet, consectetur adipiscing elit  Lorem ipsum dolor sit amet, consectetur adipiscing elit  Lorem ipsum dolor sit amet, consectetur adipiscing elit ."}{" "}
-            </p>
+            <h2 className="text-lg font-semibold text-muted-foreground">
+              {singleProduct?.prod_class}
+            </h2>
+            <p className="text-muted-foreground">{singleProduct?.bigDesc}</p>
           </div>
-       
 
           {/* Size Selector */}
           {/* {(singleProduct?.category === "Clothing" ||
@@ -270,7 +269,7 @@ const SingleProduct = () => {
               </fieldset>
             </div>
           ) : (
-            <p className="text-sm text-muted-foreground">No sizes available</p>
+            <></>
           )}
 
           {/* Color Selector */}
@@ -307,7 +306,7 @@ const SingleProduct = () => {
               </fieldset>
             </div>
           ) : (
-            <p className="text-sm text-muted-foreground">No colors available</p>
+            <></>
           )}
 
           {/* Price */}

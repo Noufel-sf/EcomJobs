@@ -8,6 +8,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { OrderItem } from "@/lib/DatabaseTypes";
 import { MoreHorizontal } from "lucide-react";
 
 interface Order {
@@ -21,7 +22,7 @@ interface Order {
   totalPrice: number;
   status: string;
   createdAt: string;
-  orderItems?: any[];
+  orderItems?: OrderItem[];
 }
 
 interface AdminOrderRowProps {
@@ -39,11 +40,13 @@ export function getColumns({
 }: AdminOrderRowProps) {
   const getStatusStyle = (status: string) => {
     switch (status) {
-      case "COMPLETED":
+      case "Delivered":
         return "bg-green-500/10 text-green-600 hover:bg-green-500/20 dark:bg-green-500/20 dark:text-green-400";
-      case "PENDING":
-        return "bg-yellow-500/10 text-yellow-600 hover:bg-yellow-500/20 dark:bg-yellow-500/20 dark:text-yellow-400";
-      case "CANCELED":
+      case "Processing":
+        return "bg-blue-500/10 text-blue-600 hover:bg-blue-500/20 dark:bg-blue-500/20 dark:text-blue-400";
+      case "Returned":
+        return "bg-purple-500/10 text-purple-600 hover:bg-purple-500/20 dark:bg-purple-500/20 dark:text-purple-400";
+      case "Canceled":
         return "bg-red-500/10 text-red-600 hover:bg-red-500/20 dark:bg-red-500/20 dark:text-red-400";
       default:
         return "bg-gray-500/10 text-gray-600 hover:bg-gray-500/20 dark:bg-gray-500/20 dark:text-gray-400";
@@ -51,51 +54,30 @@ export function getColumns({
   };
 
   return [
+  
+   
     {
-      id: "select",
-      header: ({ table }: any) => (
-        <Checkbox
-          className="cursor-pointer"
-          checked={
-            table.getIsAllPageRowsSelected() ||
-            (table.getIsSomePageRowsSelected() && "indeterminate")
-          }
-          onCheckedChange={(value: any) => table.toggleAllPageRowsSelected(!!value)}
-          aria-label="Select all"
-        />
-      ),
+      id: "firstName",
+      header: "Client",
+      accessorFn: (row) => row.firstName,
       cell: ({ row }: any) => (
-        <Checkbox
-          className="cursor-pointer"
-          checked={row.getIsSelected()}
-          onCheckedChange={(value: any) => row.toggleSelected(!!value)}
-          aria-label="Select row"
-        />
-      ),
-      enableSorting: false,
-      enableHiding: false,
-    },
-    {
-      accessorKey: "id",
-      header: "ID",
-      cell: ({ row }: any) => (
-        <div className="font-medium">{row.getValue("id")}</div>
+        <div className="font-medium">{row.getValue("firstName") + " " + row.original.lastName}</div>
       ),
     },
     {
-      id: "userName",
-      header: "User",
-      accessorFn: (row: Order) => row.user?.name,
+      id: "state",
+      header: "state",
+      accessorFn: (row: Order) => row.state,
       cell: ({ row }: any) => (
-        <div className="font-medium">{row.original.user?.name}</div>
+        <div className="font-medium">{row.getValue("state")}</div>
       ),
     },
     {
-      accessorKey: "totalPrice",
+      accessorKey: "totalCost",
       header: "Total",
       cell: ({ row }: any) => (
-        <div className="font-medium">
-          {row.getValue("totalPrice").toFixed(2)}
+        <div className="font-medium text-green-500">
+          {row.getValue("totalCost").toFixed(2)}
         </div>
       ),
     },
@@ -123,28 +105,37 @@ export function getColumns({
               <DropdownMenuItem
                 className="cursor-pointer"
                 inset={false}
-                onClick={() => handleStatusChange(order.id, "PENDING")}
+                onClick={() => handleStatusChange(order.id, "New")}
               >
                 <span className="text-xs px-2 py-1 rounded-full bg-yellow-500/10 text-yellow-600 dark:bg-yellow-500/20 dark:text-yellow-400">
-                  PENDING
+                  New
                 </span>
               </DropdownMenuItem>
               <DropdownMenuItem
                 className="cursor-pointer"
                 inset={false}
-                onClick={() => handleStatusChange(order.id, "COMPLETED")}
+                onClick={() => handleStatusChange(order.id, "Processing")}
+              >
+                <span className="text-xs px-2 py-1 rounded-full bg-blue-500/10 text-blue-600 dark:bg-blue-500/20 dark:text-blue-400">
+                  Processing
+                </span>
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                className="cursor-pointer"
+                inset={false}
+                onClick={() => handleStatusChange(order.id, "Delivered")}
               >
                 <span className="text-xs px-2 py-1 rounded-full bg-green-500/10 text-green-600 dark:bg-green-500/20 dark:text-green-400">
-                  COMPLETED
+                  Delivered
                 </span>
               </DropdownMenuItem>
               <DropdownMenuItem
                 className="cursor-pointer"
                 inset={false}
-                onClick={() => handleStatusChange(order.id, "CANCELED")}
+                onClick={() => handleStatusChange(order.id, "Returned")}
               >
                 <span className="text-xs px-2 py-1 rounded-full bg-red-500/10 text-red-600 dark:bg-red-500/20 dark:text-red-400">
-                  CANCELED
+                  Returned
                 </span>
               </DropdownMenuItem>
             </DropdownMenuContent>
@@ -152,13 +143,7 @@ export function getColumns({
         );
       },
     },
-    {
-      accessorKey: "createdAt",
-      header: "Date",
-      cell: ({ row }: any) => (
-        <div>{new Date(row.getValue("createdAt")).toLocaleDateString()}</div>
-      ),
-    },
+  
     {
       id: "actions",
       enableHiding: false,
