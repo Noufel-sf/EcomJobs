@@ -1,6 +1,5 @@
 import { Product } from "@/lib/DatabaseTypes";
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
-import { ALargeSmall } from "lucide-react";
 
 const API_URL = "https://wadkniss.onrender.com/api/v1";
 

@@ -37,6 +37,10 @@ const data = {
           title: 'Orders',
           url: '/admin-seller/orders',
         },
+        {
+          title: 'Shipping',
+          url: '/admin-seller/shipping',
+        },
       ],
     },
   ],
