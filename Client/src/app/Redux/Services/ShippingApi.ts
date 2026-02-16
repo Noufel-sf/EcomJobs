@@ -8,10 +8,10 @@ export interface ShippingState {
   available: boolean;
 }
 
-export interface UpdateShippingPriceRequest {
+export interface UpdateShippingsRequest {
   ownerId: string;
   stateID: string;
-  price: number;
+  price : number;
 }
 const API_URL = "https://wadkniss.onrender.com/api/v1";
 
@@ -46,39 +46,19 @@ export const shippingApi = createApi({
 
     }),
 
-    updateShippingPrice: builder.mutation<
+    updateShippings: builder.mutation<
       ShippingState,
-      UpdateShippingPriceRequest
+      UpdateShippingsRequest
     >({
       query: ({ ownerId, ...data }) => ({ 
         url: `/${ownerId}`,
-        method: "POST",
+        method: "PUT",
         body: data,
       }),
       invalidatesTags: ["ShippingStates"],
     }),
 
-    activateShippingStates: builder.mutation<
-      { message: string },
-      { stateIds: string[] }
-    >({
-      query: ({ stateIds }) => ({
-        url: `/activate/${stateIds}`,
-        method: "POST",
-      }),
-      invalidatesTags: ["ShippingStates"],
-    }),
-
-    deactivateShippingStates: builder.mutation<
-      { message: string },
-      { stateIds: string[] }
-    >({
-      query: ({ stateIds }) => ({
-        url:`/deactivate/${stateIds}`,
-        method: "POST",
-      }),
-      invalidatesTags: ["ShippingStates"],
-    }),
+  
 
   
   }),
@@ -86,7 +66,5 @@ export const shippingApi = createApi({
 
 export const {
   useGetAllShippingSellerStatesQuery,
-  useUpdateShippingPriceMutation,
-  useActivateShippingStatesMutation,
-  useDeactivateShippingStatesMutation,
+  useUpdateShippingsMutation,
 } = shippingApi;
