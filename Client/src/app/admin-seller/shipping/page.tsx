@@ -82,8 +82,7 @@ export default function ShippingManagement() {
   const { data: statesData, isLoading } =
     useGetAllShippingSellerStatesQuery(ownerId);
 
-  const [updatePrice, { isLoading: isUpdating }] =
-    useUpdateShippingsMutation();
+  const [updatePrice, { isLoading: isUpdating }] = useUpdateShippingsMutation();
 
   // 🔥 Editable Local State
   const [editableStates, setEditableStates] = useState<ShippingState[]>([]);
@@ -100,8 +99,9 @@ export default function ShippingManagement() {
   const [rowSelection, setRowSelection] = useState({});
 
   const [editDialogOpen, setEditDialogOpen] = useState(false);
-  const [selectedState, setSelectedState] =
-    useState<ShippingState | null>(null);
+  const [selectedState, setSelectedState] = useState<ShippingState | null>(
+    null,
+  );
   const [priceInput, setPriceInput] = useState("");
 
   const statistics = useMemo(() => {
@@ -119,8 +119,8 @@ export default function ShippingManagement() {
       prev.map((s) =>
         s.id === selectedState?.id
           ? { ...s, price: parseFloat(priceInput) }
-          : s
-      )
+          : s,
+      ),
     );
 
     toast.success("Price updated locally");
@@ -138,10 +138,11 @@ export default function ShippingManagement() {
         price: state.price,
         available: state.availavle,
       }));
+      console.log(payload);
 
       await updatePrice({
         ownerId,
-        data: payload,
+        payload,
       }).unwrap();
 
       toast.success("All states updated successfully!");
@@ -156,18 +157,14 @@ export default function ShippingManagement() {
       header: ({ table }: any) => (
         <Checkbox
           checked={table.getIsAllPageRowsSelected()}
-          onCheckedChange={(value) =>
-            table.toggleAllPageRowsSelected(!!value)
-          }
+          onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
           className="cursor-pointer"
         />
       ),
       cell: ({ row }: any) => (
         <Checkbox
           checked={row.getIsSelected()}
-          onCheckedChange={(value) =>
-            row.toggleSelected(!!value)
-          }
+          onCheckedChange={(value) => row.toggleSelected(!!value)}
           className="cursor-pointer"
         />
       ),
@@ -217,7 +214,7 @@ export default function ShippingManagement() {
               <Button variant="ghost" size="default" className="h-8 px-2">
                 <span
                   className={`text-xs px-2 py-1 rounded-full ${getStatusStyle(
-                    status
+                    status,
                   )}`}
                 >
                   {status}
@@ -231,10 +228,8 @@ export default function ShippingManagement() {
                 onClick={() =>
                   setEditableStates((prev) =>
                     prev.map((s) =>
-                      s.id === state.id
-                        ? { ...s, availavle: true }
-                        : s
-                    )
+                      s.id === state.id ? { ...s, availavle: true } : s,
+                    ),
                   )
                 }
               >
@@ -244,10 +239,8 @@ export default function ShippingManagement() {
                 onClick={() =>
                   setEditableStates((prev) =>
                     prev.map((s) =>
-                      s.id === state.id
-                        ? { ...s, available: false }
-                        : s
-                    )
+                      s.id === state.id ? { ...s, available: false } : s,
+                    ),
                   )
                 }
               >
@@ -300,11 +293,16 @@ export default function ShippingManagement() {
   return (
     <AdminSidebarLayout breadcrumbTitle="Shipping Management">
       <div className="space-y-6">
+        <h1 className="text-2xl font-bold">Shipping States</h1>
+        <p className="text-gray-700 dark:text-gray-400 mb-4">
+          View & Track All User shipping states.
+        </p>
 
-        {/* HEADER + CARDS DESIGN UNTOUCHED */}
 
         <div className="flex justify-end">
           <Button
+            size={"lg"}
+            className={""}
             variant="primary"
             onClick={handleUpdateStates}
             disabled={isUpdating}
@@ -324,7 +322,7 @@ export default function ShippingManagement() {
                     <TableHead key={header.id}>
                       {flexRender(
                         header.column.columnDef.header,
-                        header.getContext()
+                        header.getContext(),
                       )}
                     </TableHead>
                   ))}
@@ -342,7 +340,7 @@ export default function ShippingManagement() {
                       <TableCell key={cell.id}>
                         {flexRender(
                           cell.column.columnDef.cell,
-                          cell.getContext()
+                          cell.getContext(),
                         )}
                       </TableCell>
                     ))}
@@ -403,6 +401,26 @@ export default function ShippingManagement() {
           </DialogContent>
         </Dialog>
 
+        <div className="space-x-2">
+          <Button
+            variant="primary"
+            size="lg"
+            className={""}
+            onClick={() => table.previousPage()}
+            disabled={!table.getCanPreviousPage()}
+          >
+            Previous
+          </Button>
+          <Button
+            size="lg"
+            variant="primary"
+            className={""}
+            onClick={() => table.nextPage()}
+            disabled={!table.getCanNextPage()}
+          >
+            Next
+          </Button>
+        </div>
       </div>
     </AdminSidebarLayout>
   );

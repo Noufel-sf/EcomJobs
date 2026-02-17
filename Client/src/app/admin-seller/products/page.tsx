@@ -44,7 +44,6 @@ import {
   useUpdateProductStatusMutation,
 } from "@/Redux/Services/ProductsApi";
 
-
 import { useGetAllClassificationsQuery } from "@/Redux/Services/ClassificationApi";
 import { Product } from "@/lib/DatabaseTypes";
 
@@ -59,13 +58,9 @@ export default function AdminProducts() {
 
   const [data, setData] = useState<Product[]>([]);
   const { data: productsData, isLoading } = useGetAllProductsQuery(undefined);
-  console.log("data" , productsData);
+  console.log("data", productsData);
   const products = productsData?.content || [];
-  console.log("products" , products);
-  
-
-
- 
+  console.log("products", products);
 
   const [sorting, setSorting] = useState<any[]>([]);
   const [columnFilters, setColumnFilters] = useState<any[]>([]);
@@ -75,7 +70,6 @@ export default function AdminProducts() {
   const [openCreate, setOpenCreate] = useState(false);
   const [openEdit, setOpenEdit] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
-  
 
   const handleCreate = async (formData: FormData) => {
     try {
@@ -130,7 +124,7 @@ export default function AdminProducts() {
     try {
       await updateProductStatus({
         id: productId,
-        available : newStatus === "active",
+        available: newStatus === "active",
       }).unwrap();
 
       toast.success("Status updated successfully");
@@ -189,7 +183,6 @@ export default function AdminProducts() {
           />
 
           <div className="flex items-center gap-3">
-            
             <CreateProductUi
               open={openCreate}
               onOpenChange={setOpenCreate}
@@ -236,7 +229,6 @@ export default function AdminProducts() {
           loading={isUpdating}
         />
 
-        {/* Table */}
         <div className="rounded-md border">
           <Table className="">
             <TableHeader className="">
@@ -286,7 +278,6 @@ export default function AdminProducts() {
           </Table>
         </div>
 
-        {/* Pagination */}
         <div className="flex items-center justify-end space-x-2 py-4">
           <div className="text-muted-foreground flex-1 text-sm">
             {table.getFilteredSelectedRowModel().rows.length} of{" "}

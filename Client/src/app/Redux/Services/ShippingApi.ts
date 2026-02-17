@@ -10,8 +10,11 @@ export interface ShippingState {
 
 export interface UpdateShippingsRequest {
   ownerId: string;
-  stateID: string;
-  price : number;
+  payload: {
+    stateID: string;
+    price: number;
+    available: boolean;
+  }[];
 }
 const API_URL = "https://wadkniss.onrender.com/api/v1";
 
@@ -50,10 +53,10 @@ export const shippingApi = createApi({
       ShippingState,
       UpdateShippingsRequest
     >({
-      query: ({ ownerId, ...data }) => ({ 
+      query: ({ ownerId, payload }) => ({ 
         url: `/${ownerId}`,
         method: "PUT",
-        body: data,
+        body: payload,
       }),
       invalidatesTags: ["ShippingStates"],
     }),
